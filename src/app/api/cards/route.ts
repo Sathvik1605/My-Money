@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
 
   const includeInactive = request.nextUrl.searchParams.get("includeInactive") === "true";
 
-  let query = supabase.from("cards").select("*").eq("user_id", user.id).order("created_at");
+  let query = supabase
+    .from("cards")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("is_active", { ascending: false })
+    .order("created_at");
   if (!includeInactive) {
     query = query.eq("is_active", true);
   }

@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { CardForm } from "@/components/CardForm";
-import type { CardRow } from "@/lib/client-types";
+import { Modal } from "@/components/Modal";
+import { PageHeader } from "@/components/PageHeader";
+import { CreditCardIcon, PlusIcon } from "@/components/icons";
+import { hasUnpaidStatements, type CardRow, type StatementRow } from "@/lib/client-types";
 
 export default function CardsPage() {
   const [cards, setCards] = useState<CardRow[]>([]);
@@ -10,16 +13,26 @@ export default function CardsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingCard, setEditingCard] = useState<CardRow | null>(null);
-  const [includeInactive, setIncludeInactive] = useState(false);
+  const [includeClosed, setIncludeClosed] = useState(false);
+  const [closeBlockedCardName, setCloseBlockedCardName] = useState<string | null>(null);
+  const [statements, setStatements] = useState<StatementRow[]>([]);
+  const [cardPendingClose, setCardPendingClose] = useState<CardRow | null>(null);
+  const [cardPendingDeletion, setCardPendingDeletion] = useState<CardRow | null>(null);
 
   async function loadCards() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/cards?includeInactive=${includeInactive}`);
-      if (!res.ok) throw new Error("Failed to load cards");
-      const { data } = await res.json();
+      const [cardsResponse, statementsResponse] = await Promise.all([
+        fetch("/api/cards?includeInactive=true"),
+        fetch("/api/statements"),
+      ]);
+      if (!cardsResponse.ok) throw new Error("Failed to load cards");
+      const { data } = await cardsResponse.json();
       setCards(data);
+      if (!statementsResponse.ok) throw new Error("Failed to load card bill history");
+      const { data: statementData } = await statementsResponse.json();
+      setStatements(statementData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -28,10 +41,9 @@ export default function CardsPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount/filter change
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount
     loadCards();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeInactive]);
+  }, []);
 
   async function handleCreate(values: Parameters<typeof handleCardSubmit>[0]) {
     const res = await fetch("/api/cards", {
@@ -52,10 +64,9 @@ export default function CardsPage() {
     bank_name: string;
     network: CardRow["network"];
     last4_digits: string;
-    credit_limit: number | null;
-    billing_cycle_start_day: number;
+    credit_limit: number;
     statement_day: number;
-    typical_due_days_after_statement: number;
+    due_day: number;
   }) {
     if (!editingCard) return;
     const res = await fetch(`/api/cards/${editingCard.id}`, {
@@ -72,16 +83,29 @@ export default function CardsPage() {
   }
 
   async function handleDeactivate(card: CardRow) {
-    if (!confirm(`Deactivate "${card.nickname}"? Its bill history will be kept.`)) return;
+    if (hasUnpaidStatements(statements.filter((statement) => statement.card_id === card.id))) {
+      setCloseBlockedCardName(card.nickname);
+      return;
+    }
+    setError(null);
     const res = await fetch(`/api/cards/${card.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_active: false }),
     });
-    if (res.ok) await loadCards();
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        setCloseBlockedCardName(card.nickname);
+      } else {
+        setError(body.error ?? "Failed to close card");
+      }
+      return;
+    }
+    await loadCards();
   }
 
-  async function handleReactivate(card: CardRow) {
+  async function handleReopen(card: CardRow) {
     const res = await fetch(`/api/cards/${card.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -90,110 +114,219 @@ export default function CardsPage() {
     if (res.ok) await loadCards();
   }
 
+  async function handleDelete(card: CardRow) {
+    setError(null);
+    const res = await fetch(`/api/cards/${card.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm_delete: true }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? "Failed to delete card");
+      return;
+    }
+    setEditingCard(null);
+    await loadCards();
+  }
+
+  // Filtering happens in memory so flipping the toggle is instant — no refetch,
+  // no loading flash.
+  const visibleCards = (includeClosed ? cards : cards.filter((c) => c.is_active)).toSorted(
+    (a, b) => Number(b.is_active) - Number(a.is_active),
+  );
+  const closedCount = cards.length - cards.filter((c) => c.is_active).length;
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Your Cards</h1>
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={includeInactive}
-              onChange={(e) => setIncludeInactive(e.target.checked)}
-            />
-            Show deactivated
-          </label>
-          {!showForm && !editingCard && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-            >
-              + Add card
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
+        title="Your Cards"
+        description="Manage the credit cards you track bills for."
+        actions={
+          <>
+            {closedCount > 0 && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeClosed}
+                onClick={() => setIncludeClosed((v) => !v)}
+                className="flex min-h-11 items-center gap-2.5 rounded-full px-1 text-sm text-[var(--color-text-muted)]"
+              >
+                <span className="switch" aria-hidden="true" data-state={includeClosed} />
+                <span>
+                  Show closed cards
+                  <span className="numeric ml-1.5 opacity-70">({closedCount})</span>
+                </span>
+              </button>
+            )}
+            <button onClick={() => setShowForm(true)} className="btn-primary">
+              <PlusIcon />
+              New card
             </button>
-          )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {showForm && (
-        <div className="mt-4">
+        <Modal title="Add new card" onClose={() => setShowForm(false)}>
           <CardForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-        </div>
+        </Modal>
       )}
 
       {editingCard && (
-        <div className="mt-4">
-          <CardForm initial={editingCard} onSubmit={handleCardSubmit} onCancel={() => setEditingCard(null)} />
+        <Modal title="Edit card" onClose={() => setEditingCard(null)}>
+          <CardForm
+            initial={editingCard}
+            onSubmit={handleCardSubmit}
+            onCancel={() => setEditingCard(null)}
+            onDelete={() => setCardPendingDeletion(editingCard)}
+          />
+        </Modal>
+      )}
+
+      {closeBlockedCardName && (
+        <Modal title="Card cannot be closed" onClose={() => setCloseBlockedCardName(null)}>
+          <p role="alert" className="text-[var(--color-ink)]">
+            {closeBlockedCardName} cannot be closed because bill payment is still pending. Mark every bill as paid before closing this card.
+          </p>
+          <div className="mt-6 flex justify-end">
+            <button type="button" onClick={() => setCloseBlockedCardName(null)} className="btn-primary">
+              Okay
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {cardPendingClose && (
+        <Modal title="Close card" onClose={() => setCardPendingClose(null)}>
+          <p>
+            Close {cardPendingClose.nickname}? Its paid bill history will remain available, but the card cannot receive new bills until reopened.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" onClick={() => setCardPendingClose(null)} className="btn-ghost">Cancel</button>
+            <button
+              type="button"
+              onClick={async () => {
+                const card = cardPendingClose;
+                setCardPendingClose(null);
+                await handleDeactivate(card);
+              }}
+              className="btn-primary"
+            >
+              Close card
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {cardPendingDeletion && (
+        <Modal title="Delete card permanently" onClose={() => setCardPendingDeletion(null)}>
+          <p role="alert">
+            Delete {cardPendingDeletion.nickname} and all of its bills permanently? This cannot be undone.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" onClick={() => setCardPendingDeletion(null)} className="btn-ghost">Cancel</button>
+            <button
+              type="button"
+              onClick={async () => {
+                const card = cardPendingDeletion;
+                setCardPendingDeletion(null);
+                await handleDelete(card);
+              }}
+              className="btn-ghost text-[var(--color-destructive)]"
+            >
+              Delete permanently
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-[var(--color-destructive)]">
+          {error}
+        </p>
+      )}
+
+      {loading && <p className="mt-6 text-sm text-[var(--color-text-muted)]">Loading…</p>}
+
+      {!loading && visibleCards.length === 0 && (
+        <div className="card-surface mt-6 p-8 text-center">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            No cards yet — add your first one with the New card button.
+          </p>
         </div>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
-        {!loading && cards.length === 0 && (
-          <p className="text-sm text-gray-500">No cards yet — add your first one above.</p>
-        )}
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            className={`rounded-lg border bg-white p-4 shadow-sm ${
-              card.is_active ? "border-gray-200" : "border-gray-200 opacity-60"
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-semibold text-gray-900">{card.nickname}</p>
-                <p className="text-sm text-gray-500">
-                  {card.bank_name} · {card.network} · •••• {card.last4_digits}
-                </p>
+      {!loading && visibleCards.length > 0 && (
+        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {visibleCards.map((card) => (
+            <li key={card.id} className={`card-surface p-4 ${card.is_active ? "" : "opacity-65"}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="squircle mt-0.5 grid h-9 w-9 shrink-0 place-items-center bg-[var(--color-canvas-soft)] text-[var(--color-ink)]">
+                    <CreditCardIcon />
+                  </span>
+                  <div>
+                    <p className="font-semibold">{card.nickname}</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      {card.bank_name} · {card.network} · <span className="numeric">•••• {card.last4_digits}</span>
+                    </p>
+                  </div>
+                </div>
+                {!card.is_active && (
+                  <span className="rounded-full border border-[var(--color-hairline)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">
+                    Closed
+                  </span>
+                )}
               </div>
-              {!card.is_active && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">Inactive</span>
-              )}
-            </div>
-            <dl className="mt-3 grid grid-cols-2 gap-1 text-xs text-gray-500">
-              <dt>Cycle start day</dt>
-              <dd className="text-right">{card.billing_cycle_start_day}</dd>
-              <dt>Statement day</dt>
-              <dd className="text-right">{card.statement_day}</dd>
-              <dt>Due (days after stmt)</dt>
-              <dd className="text-right">{card.typical_due_days_after_statement}</dd>
-              {card.credit_limit != null && (
-                <>
-                  <dt>Credit limit</dt>
-                  <dd className="text-right">₹{card.credit_limit.toLocaleString("en-IN")}</dd>
-                </>
-              )}
-            </dl>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingCard(card);
-                }}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Edit
-              </button>
-              {card.is_active ? (
-                <button
-                  onClick={() => handleDeactivate(card)}
-                  className="text-xs font-medium text-red-600 hover:text-red-500"
-                >
-                  Deactivate
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleReactivate(card)}
-                  className="text-xs font-medium text-green-600 hover:text-green-500"
-                >
-                  Reactivate
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+
+              <dl className="mt-4 grid grid-cols-2 gap-y-1.5 border-t border-[var(--color-hairline)] pt-3 text-xs">
+                <dt className="text-[var(--color-text-muted)]">Credit limit</dt>
+                <dd className="numeric text-right">₹{card.credit_limit.toLocaleString("en-IN")}</dd>
+                <dt className="text-[var(--color-text-muted)]">Statement day</dt>
+                <dd className="numeric text-right">{card.statement_day}</dd>
+                <dt className="text-[var(--color-text-muted)]">Due date</dt>
+                <dd className="numeric text-right">{card.due_day}</dd>
+              </dl>
+
+              <div className="mt-3 flex gap-2">
+                {card.is_active ? (
+                  <>
+                    <button
+                     onClick={() => {
+                       setShowForm(false);
+                       setEditingCard(card);
+                     }}
+                     className="btn-ghost min-h-9 px-3 text-xs"
+                    >
+                     Edit
+                    </button>
+                    <button
+                     onClick={() => {
+                       if (hasUnpaidStatements(statements.filter((statement) => statement.card_id === card.id))) {
+                         setCloseBlockedCardName(card.nickname);
+                       } else {
+                         setCardPendingClose(card);
+                       }
+                     }}
+                     className="btn-ghost min-h-9 px-3 text-xs text-[var(--color-destructive)]"
+                    >
+                      Close card
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleReopen(card)}
+                    className="btn-ghost min-h-9 px-3 text-xs text-[var(--color-accent)]"
+                  >
+                    Reopen card
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

@@ -2,8 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { StatementForm } from "@/components/StatementForm";
-import { formatCurrency } from "@/lib/client-types";
-import type { CardRow, StatementRow, StatementStatus } from "@/lib/client-types";
+import { Select } from "@/components/Select";
+import { Modal } from "@/components/Modal";
+import { PageHeader } from "@/components/PageHeader";
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "@/components/icons";
+import { formatCurrency, isOverdue, paymentState } from "@/lib/client-types";
+import { cardsWithPaymentsDue, financialYearStartForDate } from "@/lib/year-grid";
+import type { CardRow, StatementRow } from "@/lib/client-types";
 
 type YearType = "financial" | "calendar";
 
@@ -11,12 +16,20 @@ interface YearGridData {
   year: number;
   yearType: YearType;
   cards: { id: string; nickname: string; is_active: boolean }[];
-  months: { month: string; amounts: Record<string, number>; total: number }[];
+  months: {
+    month: string;
+    amounts: Record<string, number>;
+    unpaidAmounts: Record<string, number>;
+    total: number;
+    unpaidTotal: number;
+  }[];
   cardTotals: Record<string, number>;
   grandTotal: number;
+  unpaidTotal: number;
+  earliestStatementDate: string | null;
 }
 
-export default function YearGridPage() {
+export default function BillOverviewPage() {
   const now = new Date();
   const defaultYear = now.getMonth() < 3 ? now.getFullYear() - 1 : now.getFullYear();
 
@@ -30,6 +43,7 @@ export default function YearGridPage() {
   const [showForm, setShowForm] = useState(false);
   const [statements, setStatements] = useState<StatementRow[]>([]);
   const [editingStatement, setEditingStatement] = useState<StatementRow | null>(null);
+  const [statementPendingRemoval, setStatementPendingRemoval] = useState<StatementRow | null>(null);
 
   const loadGrid = useCallback(async () => {
     setLoading(true);
@@ -67,14 +81,10 @@ export default function YearGridPage() {
 
   async function postStatement(values: {
     card_id: string;
-    cycle_start_date: string;
-    cycle_end_date: string;
     statement_date: string;
     due_date: string;
     total_amount_due: number;
-    amount_paid: number;
-    payment_date: string | null;
-    status: StatementStatus;
+    mark_paid?: true;
   }) {
     const res = await fetch("/api/statements", {
       method: "POST",
@@ -110,12 +120,28 @@ export default function YearGridPage() {
 
   async function handleDeleteStatement() {
     if (!editingStatement) return;
-    if (!confirm("Delete this bill entry? This cannot be undone.")) return;
     const res = await fetch(`/api/statements/${editingStatement.id}`, { method: "DELETE" });
-    if (res.ok) {
-      setEditingStatement(null);
-      await Promise.all([loadGrid(), loadCardsAndStatements()]);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? "Failed to remove bill entry");
     }
+    setEditingStatement(null);
+    await Promise.all([loadGrid(), loadCardsAndStatements()]);
+  }
+
+  async function handleMarkUnpaid() {
+    if (!editingStatement) return;
+    const res = await fetch(`/api/statements/${editingStatement.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mark_unpaid: true }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? "Failed to mark bill unpaid");
+    }
+    setEditingStatement(null);
+    await Promise.all([loadGrid(), loadCardsAndStatements()]);
   }
 
   function findStatementForCell(cardId: string, monthLabel: string): StatementRow | undefined {
@@ -128,125 +154,306 @@ export default function YearGridPage() {
   }
 
   const activeCards = allCards.filter((c) => c.is_active);
+  const activeCardsInSelectedPeriod = grid?.cards.filter((card) => card.is_active).length ?? 0;
+  const cardsWithOutstandingPayments = cardsWithPaymentsDue(grid?.months ?? []);
+
+  // Never offer years that cannot contain data: the range starts at the
+  // earliest recorded bill (or the current year if there are none) and ends at
+  // the current year, +1 for financial years that span into the next one.
+  const currentYear = now.getFullYear();
+  const earliestYear = grid?.earliestStatementDate
+    ? yearType === "financial"
+      ? financialYearStartForDate(grid.earliestStatementDate)
+      : new Date(grid.earliestStatementDate + "T00:00:00Z").getUTCFullYear()
+    : defaultYear;
+  const minYear = Math.min(earliestYear, defaultYear, year);
+  const maxYear = Math.max(currentYear, year);
+  const selectableYears: number[] = [];
+  for (let y = maxYear; y >= minYear; y--) selectableYears.push(y);
+
+  const formatYearLabel = (y: number) =>
+    yearType === "financial" ? `FY ${y}-${(y + 1).toString().slice(-2)}` : String(y);
+
+  function handleYearTypeChange(nextYearType: YearType) {
+    if (yearType === "financial" && nextYearType === "calendar") {
+      setYear((financialYearStart) => Math.min(financialYearStart + 1, now.getFullYear()));
+    }
+    if (yearType === "calendar" && nextYearType === "financial") {
+      setYear((currentYear) => currentYear - 1);
+    }
+    setYearType(nextYearType);
+  }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold text-gray-900">Year Grid</h1>
-        <div className="flex items-center gap-3">
-          <select
-            value={yearType}
-            onChange={(e) => setYearType(e.target.value as YearType)}
-            className="input w-auto"
-          >
-            <option value="financial">Financial Year (Apr–Mar)</option>
-            <option value="calendar">Calendar Year (Jan–Dec)</option>
-          </select>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setYear((y) => y - 1)}
-              className="rounded-md border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
-              aria-label="Previous year"
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
+        title="Bill Overview"
+        description={`Every credit card bill for ${formatYearLabel(year)}, month by month.`}
+        actions={
+          <>
+            <div
+              role="radiogroup"
+              aria-label="Year type"
+              className="segmented"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                  e.preventDefault();
+                  handleYearTypeChange(yearType === "financial" ? "calendar" : "financial");
+                }
+              }}
             >
-              ←
-            </button>
-            <span className="min-w-[4rem] text-center text-sm font-medium text-gray-700">
-              {yearType === "financial" ? `FY ${year}-${(year + 1).toString().slice(-2)}` : year}
-            </span>
-            <button
-              onClick={() => setYear((y) => y + 1)}
-              className="rounded-md border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
-              aria-label="Next year"
-            >
-              →
-            </button>
+              {(
+                [
+                  ["financial", "Financial year"],
+                  ["calendar", "Calendar year"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={yearType === value}
+                  tabIndex={yearType === value ? 0 : -1}
+                  onClick={() => handleYearTypeChange(value)}
+                  className="segmented-option"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setYear((y) => y - 1)}
+                disabled={year <= minYear}
+                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous year"
+              >
+                <ChevronLeftIcon />
+              </button>
+              <Select
+                value={year}
+                onChange={setYear}
+                ariaLabel="Select year"
+                className="w-auto min-w-36"
+                options={selectableYears.map((yearOption) => ({
+                  value: yearOption,
+                  label: formatYearLabel(yearOption),
+                }))}
+              />
+              <button
+                onClick={() => setYear((y) => y + 1)}
+                disabled={year >= maxYear}
+                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next year"
+              >
+                <ChevronRightIcon />
+              </button>
+            </div>
+
+            {activeCards.length > 0 && (
+              <button onClick={() => setShowForm(true)} className="btn-primary">
+                <PlusIcon />
+                New bill
+              </button>
+            )}
+          </>
+        }
+      />
+
+      {grid && grid.cards.length > 0 && (
+        <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="card-soft p-5">
+            <dt className="label text-[var(--color-text-muted)]">
+              Total billed
+            </dt>
+            <dd className="numeric mt-2 text-[32px] font-[652] leading-[1.13]">
+              {formatCurrency(grid.grandTotal)}
+            </dd>
           </div>
-          {activeCards.length > 0 && !showForm && !editingStatement && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          <div className="card-soft p-5">
+            <dt className="label text-[var(--color-text-muted)]">
+              Outstanding
+            </dt>
+            <dd
+              className={`numeric mt-2 text-[32px] font-[652] leading-[1.13] ${
+                grid.unpaidTotal > 0 ? "text-[var(--color-destructive)]" : ""
+              }`}
             >
-              + Add bill
-            </button>
-          )}
-        </div>
-      </div>
+              {formatCurrency(grid.unpaidTotal)}
+            </dd>
+            <p className="caption mt-2 text-[var(--color-text-muted)]">
+              {grid.unpaidTotal > 0 ? "Not yet fully paid" : "All bills settled"}
+            </p>
+          </div>
+          <div className="card-soft p-5">
+            <dt className="label text-[var(--color-text-muted)]">
+              Active cards
+            </dt>
+            <dd className="numeric mt-2 text-[32px] font-[652] leading-[1.13]">
+              {activeCardsInSelectedPeriod}
+            </dd>
+          </div>
+          <div className="card-soft p-5">
+            <dt className="label text-[var(--color-text-muted)]">
+              Cards with payments due
+            </dt>
+            <dd
+              className={`numeric mt-2 text-[32px] font-[652] leading-[1.13] ${
+                cardsWithOutstandingPayments > 0 ? "text-[var(--color-destructive)]" : ""
+              }`}
+            >
+              {cardsWithOutstandingPayments}
+            </dd>
+          </div>
+        </dl>
+      )}
 
       {activeCards.length === 0 && !loading && (
-        <p className="mt-6 text-sm text-gray-500">
-          You don&apos;t have any cards yet. Head to the Cards tab to add your first one.
-        </p>
+        <div className="card-soft mt-6 p-12 text-center">
+          <p className="text-[var(--color-text-muted)]">
+            You don&apos;t have any cards yet. Add your first one from the Cards page.
+          </p>
+        </div>
       )}
 
       {showForm && (
-        <div className="mt-4">
-          <StatementForm cards={activeCards} onSubmit={handleCreateStatement} onCancel={() => setShowForm(false)} />
-        </div>
+        <Modal title="Add new bill" onClose={() => setShowForm(false)}>
+          <StatementForm
+            cards={activeCards}
+            onSubmit={handleCreateStatement}
+            onCancel={() => setShowForm(false)}
+          />
+        </Modal>
       )}
 
       {editingStatement && (
-        <div className="mt-4">
+        <Modal title="Edit bill entry" onClose={() => setEditingStatement(null)}>
           <StatementForm
             cards={allCards}
             initial={editingStatement}
             onSubmit={handleUpdateStatement}
             onCancel={() => setEditingStatement(null)}
-            onDelete={handleDeleteStatement}
+            onDelete={async () => setStatementPendingRemoval(editingStatement)}
+            onMarkUnpaid={handleMarkUnpaid}
           />
-        </div>
+        </Modal>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {statementPendingRemoval && (
+        <Modal title="Remove bill entry" onClose={() => setStatementPendingRemoval(null)}>
+          <p role="alert">
+            Remove this bill entry permanently? This cannot be undone.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" onClick={() => setStatementPendingRemoval(null)} className="btn-ghost">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setStatementPendingRemoval(null);
+                await handleDeleteStatement();
+              }}
+              className="btn-ghost text-[var(--color-destructive)]"
+            >
+              Remove permanently
+            </button>
+          </div>
+        </Modal>
+      )}
 
-      {loading && <p className="mt-6 text-sm text-gray-500">Loading…</p>}
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-[var(--color-destructive)]">
+          {error}
+        </p>
+      )}
+
+      {loading && <p className="mt-6 text-[var(--color-text-muted)]">Loading…</p>}
 
       {!loading && grid && grid.cards.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-600">Month</th>
+        <div className="card-surface mt-4 overflow-x-auto">
+          <table className="min-w-full w-max table-fixed text-sm">
+            <caption className="sr-only">Credit card bills by month</caption>
+            <thead>
+              <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
+                <th
+                  scope="col"
+                  className="label sticky left-0 z-20 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left text-[var(--color-text-muted)]"
+                >
+                  Month
+                </th>
                 {grid.cards.map((c) => (
-                  <th key={c.id} className="px-4 py-2 text-right font-medium text-gray-600">
+                  <th
+                    key={c.id}
+                    scope="col"
+                    className="label w-[var(--table-card-column-width)] px-4 py-2.5 text-right text-[var(--color-text-muted)]"
+                  >
                     {c.nickname}
-                    {!c.is_active && <span className="ml-1 text-gray-400">(inactive)</span>}
+                    {!c.is_active && <span className="ml-1 opacity-60">(closed)</span>}
                   </th>
                 ))}
-                <th className="px-4 py-2 text-right font-semibold text-gray-700">Total</th>
+                <th
+                  scope="col"
+                  className="label sticky right-0 z-20 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right text-[var(--color-ink)]"
+                >
+                  Total
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {grid.months.map((row) => (
-                <tr key={row.month}>
-                  <td className="px-4 py-2 font-medium text-gray-700">{row.month}</td>
+                <tr key={row.month} className="border-b border-[var(--color-hairline)] last:border-0">
+                  <th
+                    scope="row"
+                    className="sticky left-0 z-10 bg-[var(--color-surface)] px-4 py-2 text-left text-[14px] font-[600]"
+                  >
+                    {row.month}
+                  </th>
                   {grid.cards.map((c) => {
                     const amount = row.amounts[c.id] ?? 0;
                     const cellStatement = findStatementForCell(c.id, row.month);
+                    const unpaid = (row.unpaidAmounts?.[c.id] ?? 0) > 0;
+                    const overdue = cellStatement ? isOverdue(cellStatement) : false;
                     return (
-                      <td
-                        key={c.id}
-                        onClick={() => cellStatement && setEditingStatement(cellStatement)}
-                        className={`px-4 py-2 text-right tabular-nums ${
-                          cellStatement ? "cursor-pointer hover:bg-indigo-50" : "text-gray-300"
-                        }`}
-                      >
-                        {amount > 0 ? formatCurrency(amount) : "—"}
+                      <td key={c.id} className="w-[var(--table-card-column-width)] px-2 py-1.5 text-right">
+                        {cellStatement ? (
+                          <button
+                            onClick={() => setEditingStatement(cellStatement)}
+                            className={`numeric min-h-9 w-full rounded-full px-2 text-right font-semibold hover:bg-[var(--color-canvas-soft)] ${
+                              unpaid ? "text-[var(--color-destructive)]" : ""
+                            }`}
+                            aria-label={`Edit ${c.nickname} bill for ${row.month}, ${formatCurrency(amount)}, ${
+                              overdue ? "overdue" : paymentState(cellStatement).toLowerCase()
+                            }`}
+                          >
+                            {formatCurrency(amount)}
+                          </button>
+                        ) : (
+                                          <span className="numeric px-2 text-[var(--color-text-faint)]">—</span>
+                        )}
                       </td>
                     );
                   })}
-                  <td className="px-4 py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                  <td className="numeric sticky right-0 z-10 w-[var(--table-total-column-width)] bg-[var(--color-surface)] px-4 py-2.5 text-right font-semibold">
+                    {formatCurrency(row.total)}
+                  </td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50 font-semibold">
-              <tr>
-                <td className="px-4 py-2">Total</td>
+            <tfoot>
+              <tr className="border-t border-[var(--color-hairline)] bg-[var(--color-canvas-soft)] font-[600]">
+                <th scope="row" className="sticky left-0 z-10 bg-[var(--color-canvas-soft)] px-4 py-3 text-left">
+                  Total
+                </th>
                 {grid.cards.map((c) => (
-                  <td key={c.id} className="px-4 py-2 text-right tabular-nums">
+                  <td key={c.id} className="numeric w-[var(--table-card-column-width)] px-4 py-3 text-right">
                     {formatCurrency(grid.cardTotals[c.id] ?? 0)}
                   </td>
                 ))}
-                <td className="px-4 py-2 text-right tabular-nums">{formatCurrency(grid.grandTotal)}</td>
+                <td className="numeric sticky right-0 z-10 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-3 text-right">
+                  {formatCurrency(grid.grandTotal)}
+                </td>
               </tr>
             </tfoot>
           </table>

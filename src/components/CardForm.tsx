@@ -1,9 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { Select } from "@/components/Select";
 import type { CardNetwork, CardRow } from "@/lib/client-types";
 
 const NETWORKS: CardNetwork[] = ["Visa", "Mastercard", "Amex", "RuPay", "Diners"];
+const BANKS = [
+  "HDFC Bank",
+  "ICICI Bank",
+  "State Bank of India",
+  "Axis Bank",
+  "Kotak Mahindra Bank",
+  "Yes Bank",
+  "Bank of Baroda",
+  "Canara Bank",
+  "Punjab National Bank",
+  "HSBC Bank",
+  "Citi Bank",
+  "Standard Chartered Bank",
+  "American Express Bank",
+  "IDFC FIRST Bank",
+  "AU Small Finance Bank",
+  "Other Bank",
+];
 
 interface CardFormProps {
   initial?: CardRow;
@@ -12,25 +31,22 @@ interface CardFormProps {
     bank_name: string;
     network: CardNetwork;
     last4_digits: string;
-    credit_limit: number | null;
-    billing_cycle_start_day: number;
+    credit_limit: number;
     statement_day: number;
-    typical_due_days_after_statement: number;
+    due_day: number;
   }) => Promise<void>;
   onCancel: () => void;
+  onDelete?: () => void | Promise<void>;
 }
 
-export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
+export function CardForm({ initial, onSubmit, onCancel, onDelete }: CardFormProps) {
   const [nickname, setNickname] = useState(initial?.nickname ?? "");
-  const [bankName, setBankName] = useState(initial?.bank_name ?? "");
+  const [bankName, setBankName] = useState(initial?.bank_name ?? BANKS[0]);
   const [network, setNetwork] = useState<CardNetwork>(initial?.network ?? "Visa");
   const [last4, setLast4] = useState(initial?.last4_digits ?? "");
-  const [creditLimit, setCreditLimit] = useState(initial?.credit_limit?.toString() ?? "");
-  const [cycleStartDay, setCycleStartDay] = useState(initial?.billing_cycle_start_day?.toString() ?? "1");
+  const [creditLimit, setCreditLimit] = useState(initial?.credit_limit.toString() ?? "");
   const [statementDay, setStatementDay] = useState(initial?.statement_day?.toString() ?? "1");
-  const [dueDaysAfter, setDueDaysAfter] = useState(
-    initial?.typical_due_days_after_statement?.toString() ?? "20"
-  );
+  const [dueDay, setDueDay] = useState(initial?.due_day?.toString() ?? "20");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,10 +60,9 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
         bank_name: bankName,
         network,
         last4_digits: last4,
-        credit_limit: creditLimit.trim() === "" ? null : Number(creditLimit),
-        billing_cycle_start_day: Number(cycleStartDay),
+        credit_limit: Number(creditLimit),
         statement_day: Number(statementDay),
-        typical_due_days_after_statement: Number(dueDaysAfter),
+        due_day: Number(dueDay),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -57,7 +72,7 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Nickname">
           <input
@@ -69,22 +84,23 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
           />
         </Field>
         <Field label="Issuing bank">
-          <input
-            required
+          <Select
             value={bankName}
-            onChange={(e) => setBankName(e.target.value)}
-            placeholder="e.g. HDFC Bank"
-            className="input"
+            onChange={setBankName}
+            ariaLabel="Issuing bank"
+            options={[...BANKS, ...(bankName && !BANKS.includes(bankName) ? [bankName] : [])].map((bank) => ({
+              value: bank,
+              label: bank,
+            }))}
           />
         </Field>
         <Field label="Network">
-          <select value={network} onChange={(e) => setNetwork(e.target.value as CardNetwork)} className="input">
-            {NETWORKS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={network}
+            onChange={setNetwork}
+            ariaLabel="Network"
+            options={NETWORKS.map((network) => ({ value: network, label: network }))}
+          />
         </Field>
         <Field label="Last 4 digits">
           <input
@@ -96,27 +112,17 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
             className="input"
           />
         </Field>
-        <Field label="Credit limit (optional)">
-          <input
-            type="number"
-            min={0}
-            value={creditLimit}
-            onChange={(e) => setCreditLimit(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Billing cycle start day (1–31)">
+        <Field label="Credit limit (₹)">
           <input
             type="number"
             required
-            min={1}
-            max={31}
-            value={cycleStartDay}
-            onChange={(e) => setCycleStartDay(e.target.value)}
-            className="input"
+            min={0}
+            value={creditLimit}
+            onChange={(e) => setCreditLimit(e.target.value)}
+            className="input numeric"
           />
         </Field>
-        <Field label="Statement day (1–31)">
+        <Field label="Statement date (1–31)">
           <input
             type="number"
             required
@@ -124,39 +130,52 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
             max={31}
             value={statementDay}
             onChange={(e) => setStatementDay(e.target.value)}
-            className="input"
+            className="input numeric"
           />
         </Field>
-        <Field label="Typical days after statement until due">
+        <Field label="Due date (1–31)">
           <input
             type="number"
             required
-            min={0}
-            max={90}
-            value={dueDaysAfter}
-            onChange={(e) => setDueDaysAfter(e.target.value)}
-            className="input"
+            min={1}
+            max={31}
+            value={dueDay}
+            onChange={(e) => setDueDay(e.target.value)}
+            className="input numeric"
           />
         </Field>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-[var(--color-destructive)]">{error}</p>}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-between gap-2">
+        <div>
+          {initial && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="btn-ghost text-[var(--color-destructive)]"
+            >
+              Delete card
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+          className="btn-ghost"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+          className="btn-primary"
         >
           {submitting ? "Saving…" : initial ? "Save changes" : "Add card"}
         </button>
+        </div>
       </div>
     </form>
   );
@@ -165,7 +184,7 @@ export function CardForm({ initial, onSubmit, onCancel }: CardFormProps) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-gray-700">{label}</span>
+      <span className="block text-sm font-medium text-[var(--color-text-muted)]">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );

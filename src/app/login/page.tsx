@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { WalletIcon } from "@/components/icons";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,16 +42,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900">Credit Card Bill Tracker</h1>
-        <p className="mt-1 text-sm text-gray-500">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      {/* Login renders outside the app shell, so it carries its own control. */}
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
+      <div className="card-surface w-full max-w-sm p-8">
+        <span className="squircle mb-4 grid h-11 w-11 place-items-center bg-[var(--color-primary)] text-[var(--color-on-primary)]">
+          <WalletIcon />
+        </span>
+        <h1 className="text-xl font-semibold">Your Money</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {mode === "sign-in" ? "Sign in to your account" : "Create your account"}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-[var(--color-text-muted)]">
               Email
             </label>
             <input
@@ -58,11 +67,11 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="input mt-1"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-[var(--color-text-muted)]">
               Password
             </label>
             <input
@@ -72,17 +81,17 @@ export default function LoginPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="input mt-1"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {message && <p className="text-sm text-green-600">{message}</p>}
+          {error && <p role="alert" className="text-sm text-[var(--color-destructive)]">{error}</p>}
+          {message && <p role="status" className="text-sm text-[var(--color-accent)]">{message}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="btn-primary w-full"
           >
             {loading ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Sign up"}
           </button>
@@ -95,7 +104,7 @@ export default function LoginPage() {
             setError(null);
             setMessage(null);
           }}
-          className="mt-4 w-full text-center text-sm text-indigo-600 hover:text-indigo-500"
+          className="mt-4 min-h-11 w-full rounded-full text-center text-sm font-medium text-[var(--color-ring)] hover:underline"
         >
           {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
         </button>

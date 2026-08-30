@@ -1,4 +1,8 @@
-# Credit Card Bill Tracker — MVP1
+# Your Money
+
+A unified personal finance workspace. Credit card bill tracking is the first module; expenses, mutual funds and stocks follow.
+
+## Credit Cards — MVP1
 
 Track what each of your credit cards billed, cycle by cycle, and see it laid
 out by year. See `credit-card-tracker-mvp1-requirements.md` (in the original

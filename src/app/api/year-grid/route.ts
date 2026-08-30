@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { jsonError, unauthorized } from "@/lib/api-helpers";
+import { buildYearGrid, cardsWithStatementsInPeriod, type GridStatement } from "@/lib/year-grid";
 
 // GET /api/year-grid?year=2025&yearType=financial|calendar
 //
 // Returns the §5.3 year grid: rows = months, columns = the caller's
-// active + inactive cards that have any statement in the range, cells =
+// active + closed cards that have a statement in the selected range, cells =
 // total amount billed (sum of total_amount_due) for statements whose
 // statement_date falls in that month. Row/column/grand totals included.
 export async function GET(request: NextRequest) {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   const { data: statements, error: statementsError } = await supabase
     .from("statements")
-    .select("card_id, statement_date, total_amount_due, cards!inner(user_id)")
+    .select("card_id, statement_date, total_amount_due, payment_date, historical_payment_confirmed, cards!inner(user_id)")
     .eq("cards.user_id", user.id)
     .gte("statement_date", startStr)
     .lte("statement_date", endStr);
@@ -60,22 +61,25 @@ export async function GET(request: NextRequest) {
     cursor.setUTCMonth(cursor.getUTCMonth() + 1);
   }
 
-  const cardIds = (cards ?? []).map((c) => c.id);
-  const cardTotals: Record<string, number> = Object.fromEntries(cardIds.map((id) => [id, 0]));
-  const grid = months.map((m) => {
-    const row: Record<string, number> = Object.fromEntries(cardIds.map((id) => [id, 0]));
-    for (const s of statements ?? []) {
-      const d = new Date(s.statement_date + "T00:00:00Z");
-      if (d.getUTCFullYear() === m.year && d.getUTCMonth() === m.month) {
-        row[s.card_id] = (row[s.card_id] ?? 0) + Number(s.total_amount_due);
-      }
-    }
-    const rowTotal = Object.values(row).reduce((a, b) => a + b, 0);
-    for (const id of cardIds) cardTotals[id] += row[id] ?? 0;
-    return { month: m.label, amounts: row, total: rowTotal };
-  });
+  const periodCards = cardsWithStatementsInPeriod(cards ?? [], statements ?? []);
+  const cardIds = periodCards.map((card) => card.id);
+  const { rows, cardTotals, grandTotal, unpaidTotal } = buildYearGrid(
+    months,
+    cardIds,
+    (statements ?? []) as GridStatement[],
+  );
 
-  const grandTotal = Object.values(cardTotals).reduce((a, b) => a + b, 0);
+  // Earliest recorded bill — the UI uses this to stop the user navigating to
+  // years that can never contain data.
+  const { data: earliest } = await supabase
+    .from("statements")
+    .select("statement_date, cards!inner(user_id)")
+    .eq("cards.user_id", user.id)
+    .order("statement_date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const earliestStatementDate = earliest?.statement_date ?? null;
 
   return NextResponse.json({
     data: {
@@ -83,10 +87,12 @@ export async function GET(request: NextRequest) {
       yearType,
       rangeStart: startStr,
       rangeEnd: endStr,
-      cards: cards ?? [],
-      months: grid,
+      earliestStatementDate,
+      cards: periodCards,
+      months: rows,
       cardTotals,
       grandTotal,
+      unpaidTotal,
     },
   });
 }
