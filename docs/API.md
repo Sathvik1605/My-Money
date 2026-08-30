@@ -68,3 +68,18 @@ Card updates that would lower a limit below an existing bill total also return
 ## Status codes
 
 `400` is malformed or invalid input; `401` is no authenticated user; `404` is an absent or unowned resource; `409` is a duplicate statement cycle; and `500` represents a database or unexpected route-handler failure.
+# Expenses API
+
+- `GET /api/expenses` seeds missing default sections and returns the caller's
+  sections, line items, and entries. `PUT /api/expenses` upserts a direct or
+  line-item month amount after ownership, active-state, availability, and
+  closed-period checks.
+- `POST /api/expenses/sections` and `PATCH /api/expenses/sections/:id` create
+  and manage sections; PATCH accepts a non-negative integer `sort_order` to
+  persist a category's user-defined order. `DELETE /api/expenses/sections/:id` requires
+  `{ "confirm_delete": true }` and cascades to its line items and entries. The
+  equivalent line-item endpoints manage nested items, and their delete endpoint
+  permanently removes associated entries after the same confirmation.
+- `GET`/`PUT /api/income` read and upsert a caller's monthly income.
+- `GET /api/expenses/summary?year=&yearType=` returns the requested calendar or
+  financial-year category, income, total, and percentage rows.

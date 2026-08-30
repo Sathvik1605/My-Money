@@ -39,3 +39,48 @@ export const statementUpdateSchema = z.object({
   mark_paid: z.literal(true).optional(),
   mark_unpaid: z.literal(true).optional(),
 });
+
+export const expenseCategorySchema = z.enum(["Need", "Want", "Investment"]);
+const monthStringSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-01$/, "Must be the first day of a valid month");
+
+export const expenseSectionInputSchema = z.object({
+  category: expenseCategorySchema,
+  name: z.string().trim().min(1, "Section name is required").max(100),
+});
+
+export const expenseSectionUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Section name is required").max(100).optional(),
+  is_active: z.boolean().optional(),
+  sort_order: z.number().int().nonnegative().optional(),
+});
+
+export const expenseLineItemInputSchema = z.object({
+  section_id: z.string().uuid(),
+  name: z.string().trim().min(1, "Line item name is required").max(100),
+});
+
+export const expenseLineItemUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Line item name is required").max(100).optional(),
+  is_active: z.boolean().optional(),
+  sort_order: z.number().int().nonnegative().optional(),
+});
+
+export const expenseEntryInputSchema = z.object({
+  section_id: z.string().uuid(),
+  line_item_id: z.string().uuid().nullable(),
+  month: monthStringSchema,
+  amount: z.number().nonnegative(),
+  unlock_closed_year: z.boolean().optional(),
+});
+
+export const monthlyIncomeInputSchema = z.object({
+  month: monthStringSchema,
+  amount: z.number().nonnegative(),
+  unlock_closed_year: z.boolean().optional(),
+});
+
+export const destructiveConfirmSchema = z.object({
+  confirm_delete: z.literal(true),
+});

@@ -3,6 +3,7 @@
 // `supabase gen types typescript --local`).
 
 export type CardNetwork = "Visa" | "Mastercard" | "Amex" | "RuPay" | "Diners";
+export type ExpenseCategory = "Need" | "Want" | "Investment";
 
 // Plain type aliases (not interfaces) so they structurally satisfy
 // supabase-js's `Record<string, unknown>` generic constraints.
@@ -31,6 +32,48 @@ export type Statement = {
   total_amount_due: number;
   payment_date: string | null;
   historical_payment_confirmed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExpenseSection = {
+  id: string;
+  user_id: string;
+  category: ExpenseCategory;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExpenseLineItem = {
+  id: string;
+  section_id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExpenseEntry = {
+  id: string;
+  user_id: string;
+  section_id: string;
+  line_item_id: string | null;
+  month: string;
+  amount: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MonthlyIncome = {
+  id: string;
+  user_id: string;
+  month: string;
+  amount: number;
   created_at: string;
   updated_at: string;
 };
@@ -65,11 +108,55 @@ export type Database = {
           },
         ];
       };
+      expense_sections: {
+        Row: ExpenseSection;
+        Insert: Omit<ExpenseSection, "id" | "created_at" | "updated_at" | "is_active" | "sort_order"> & {
+          id?: string;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: Partial<Omit<ExpenseSection, "id" | "user_id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      expense_line_items: {
+        Row: ExpenseLineItem;
+        Insert: Omit<ExpenseLineItem, "id" | "created_at" | "updated_at" | "is_active" | "sort_order"> & {
+          id?: string;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: Partial<Omit<ExpenseLineItem, "id" | "section_id" | "created_at" | "updated_at">>;
+        Relationships: [
+          {
+            foreignKeyName: "expense_line_items_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "expense_sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      expense_entries: {
+        Row: ExpenseEntry;
+        Insert: Omit<ExpenseEntry, "id" | "created_at" | "updated_at" | "notes"> & {
+          id?: string;
+          notes?: string | null;
+        };
+        Update: Partial<Omit<ExpenseEntry, "id" | "user_id" | "section_id" | "line_item_id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      monthly_income: {
+        Row: MonthlyIncome;
+        Insert: Omit<MonthlyIncome, "id" | "created_at" | "updated_at"> & { id?: string };
+        Update: Partial<Omit<MonthlyIncome, "id" | "user_id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       card_network: CardNetwork;
+      expense_category: ExpenseCategory;
     };
     CompositeTypes: Record<string, never>;
   };

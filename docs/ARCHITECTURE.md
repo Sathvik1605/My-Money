@@ -1,5 +1,19 @@
 # Architecture
 
+## Shared page layout
+
+Primary workspace pages use the `.app-page` global CSS primitive from
+`src/app/globals.css`. It centralizes the centered 1440px content maximum and
+responsive inline gutters; each primary page applies the shared 32px vertical
+spacing. This allows individual table cards to retain their own horizontal
+scrolling without inconsistent page-level spacing.
+
+The same stylesheet provides `.table-header`, the shared 16px semibold style
+used by financial and expense table header cells.
+
+It also provides `.table-data-row`, a fixed 48px row-height primitive applied
+to the Bill Overview, Expense Entry, and Expense Summary table bodies.
+
 ## Shared dropdowns
 
 `src/components/Select.tsx` provides the application's shared dropdown control

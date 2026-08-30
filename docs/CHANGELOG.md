@@ -2,6 +2,126 @@
 
 ## 2026-08-30
 
+- Added the Expenses module with user-scoped sections, optional line items,
+  monthly amounts/income, selected-year entry and summary views, temporary
+  closed-year unlocking, and RLS-protected API routes.
+- Renamed the Expenses grid's primary row heading to Category.
+- Made incremental local migrations the documented default so independent
+  tables and existing application data are preserved without database resets.
+- Made Expense Entry default to Calendar year and render missing expense values
+  as blank cells rather than zero amounts.
+- Made Expense category labels on the yearly grid colour-coded and explicitly
+  linked to section management; standardized equal-width Summary columns that
+  report the same saved expense and income data.
+- Renamed Expense labels to Investments, Needs, and Wants; grouped sections and
+  items beneath their category in the leftmost grid column; and applied those
+  category colours consistently to management and Summary views.
+- Split the Expenses grid's left edge into grouped Category and Section or item
+  columns, removing standalone category data rows.
+- Replaced Expense deactivation with confirmed permanent deletion. Deleting a
+  section cascades to its line items and entries; deleting a line item removes
+  its associated entries.
+- Moved Expense deletion controls beside section and line-item names so they
+  remain visible independently of the monthly amount column.
+- Replaced text deletion controls with red, accessible icon-only controls and
+  made every Expense section open its line-item page.
+- Fixed starter-section seeding so a confirmed deletion is permanent rather
+  than being recreated on the next Expenses page load.
+- Kept Expense lists clean by revealing red delete icons only after the user
+  enters the appropriate Delete category or Delete items mode.
+- Replaced repeated Expense category names in the grid with narrow color-coded
+  category markers and an explicit top-left text legend.
+- Removed the remaining category text from grid markers, leaving only the
+top-left legend to explain their colors.
+- Halved the width of Expenses category markers and made the top legend labels
+  clickable links to their respective section-management pages.
+- Fixed modal focus so Add section inputs accept typing. Consolidated default
+  Investment sections into Investments with Mutual Funds, Stocks, and Gold line
+  items, migrating those retained entries and removing PPF/Silver as approved.
+- Collapsed the main Expenses grid to clickable sections only and moved
+  delete-mode trash icons to an animated right-edge action slot after amounts.
+- Kept the Expense Entry period controls together while removing its deferred
+  Income action, and standardized permanent-deletion confirmations as solid red
+  destructive buttons.
+- Kept Expense Entry's year mode and compact year picker side by side and
+  alternated neutral month-column surfaces for clearer annual scanning.
+- Standardized Expense Entry with Bill Overview's full year-control pattern,
+  reduced its selector width, and aligned the Section header with the dark
+  alternating month surface.
+- Kept the Expense Entry category legend outside the horizontal scroll viewport
+  and pinned its category and Section headers above the month columns.
+- Standardized Bill Overview, Cards, and Expense Entry on the shared balanced
+  application page gutter.
+- Increased the shared workspace page gutters and top spacing for more visual
+  breathing room.
+- Increased the shared primary-page side gutters again to 32px on small
+  screens, 48px at `sm`, and 80px at `lg`.
+- Extended the shared page container to every workspace route, including
+  category and nested subcategory pages, with matching 32px top and bottom
+  spacing.
+- Reduced internal padding in all four Bill Overview summary cards to make the
+  period overview more compact.
+- Further compacted the Bill Overview summary cards with 12px internal padding
+  and 24px headline figures.
+- Converted Bill Overview summary cards to compact horizontal label/value rows,
+  preserving the no-vertical-scroll 1440x900 annual grid requirement.
+- Matched Bill Overview summary-card label sizing and weight to its table
+  headers.
+- Made Expense Entry's Section and month header typography, muted color, soft
+  fill, and padding match the Bill Overview table-header standard.
+- Standardized every table header on Expense Summary's bold ink treatment,
+  including Bill Overview and Expense Entry.
+- Added section, month, and grand totals to Expense Entry and reduced its
+  category legend markers to 8px.
+- Reduced Expense Entry's category legend container height while preserving
+  44px touch targets for its category links.
+- Restored the Expense Entry table card's rounded lower corners around the
+  Total footer.
+- Strengthened light-theme category green, yellow, and red surfaces for clearer
+  legend and row-marker visibility.
+- Rebalanced light-theme category surfaces as bright pastels after the
+  dark-theme-strength treatment proved too heavy on the white canvas.
+- Applied semantic category colors to category and subcategory page titles;
+  line-item names retain standard ink.
+- Prevented stale or placeholder subcategory titles from flashing during
+  navigation between nested expense pages.
+- Made nested expense titles appear immediately from their parent navigation
+  link while the section data loads.
+- Expanded Income into a Financial/Calendar annual month grid with monthly and
+  yearly totals.
+- Rotated the Income grid into a vertical Month/Income table.
+- Constrained the Income table to a compact width and aligned its clipped
+  corners with the shared table-card treatment.
+- Simplified Income month labels and widened the compact table.
+- Aligned Income body and total rows to the shared 48px table-row height.
+- Added explicit parent-navigation links from expense category and item pages.
+- Renamed the Expense Summary's remaining Salary labels to Income; database,
+  API, and types already used the `income` terminology.
+- Aligned Expense Summary's year controls and keyboard-operable
+  Financial/Calendar toggle with the other yearly workspace pages.
+- Moved direct year selection to the left of Financial/Calendar controls across
+  workspace period controls.
+- Aligned year selectors with the standard dropdown geometry while retaining
+  the shared action-pill shape for Financial/Calendar controls.
+- Standardized application transitions on the 420ms ease-out reorder motion,
+  including category and line-item delete-action reveals.
+- Increased and standardized table headers, including Section and month labels,
+  with the shared semibold 16px treatment.
+- Simplified Expense Entry month headers to month names and widened its fixed
+  year selector to fit financial-year labels without layout changes.
+- Replaced abbreviated financial-year labels with the full `YYYY-YYYY` form
+  across Bill Overview, Expenses, and Expense Summary.
+- Added persistent per-category section ordering with drag-and-drop and
+  accessible move controls in a dedicated reorder mode.
+- Simplified reorder mode to a single dot handle per section, with Arrow Up and
+  Arrow Down keyboard movement instead of visible arrow controls.
+- Matched the reorder-handle reveal to delete-mode motion and added an
+  immediate drag-over order preview for spatial feedback.
+- Renamed category management actions to Sub category and slowed reorder
+  transitions so the changing order is more visible.
+- Standardized populated and empty financial/expense grid rows to the shared
+  fixed 48px data-row height.
+
 - Replaced partial bill payments with a binary Paid action. Migration
   `20260830020000_replace_partial_payments_with_payment_date.sql` removes
   `amount_paid`; the API records the payment date automatically when a bill is

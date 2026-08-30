@@ -138,7 +138,7 @@ export default function CardsPage() {
   const closedCount = cards.length - cards.filter((c) => c.is_active).length;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="app-page mx-auto">
       <PageHeader
         title="Your Cards"
         description="Manage the credit cards you track bills for."
@@ -233,7 +233,7 @@ export default function CardsPage() {
                 setCardPendingDeletion(null);
                 await handleDelete(card);
               }}
-              className="btn-ghost text-[var(--color-destructive)]"
+              className="btn-destructive"
             >
               Delete permanently
             </button>

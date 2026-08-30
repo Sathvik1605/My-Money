@@ -1,4 +1,5 @@
 export type CardNetwork = "Visa" | "Mastercard" | "Amex" | "RuPay" | "Diners";
+export type ExpenseCategory = "Need" | "Want" | "Investment";
 
 /** Historical bills preserve their paid state without inventing a payment date. */
 export type PaymentState = "Unpaid" | "Paid";
@@ -25,6 +26,38 @@ export interface StatementRow {
   total_amount_due: number;
   payment_date: string | null;
   historical_payment_confirmed?: boolean;
+}
+
+export interface ExpenseSectionRow {
+  id: string;
+  category: ExpenseCategory;
+  name: string;
+  sort_order?: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ExpenseLineItemRow {
+  id: string;
+  section_id: string;
+  name: string;
+  sort_order?: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ExpenseEntryRow {
+  id: string;
+  section_id: string;
+  line_item_id: string | null;
+  month: string;
+  amount: number;
+}
+
+export interface MonthlyIncomeRow {
+  id: string;
+  month: string;
+  amount: number;
 }
 
 type Payment = Pick<StatementRow, "payment_date" | "historical_payment_confirmed">;

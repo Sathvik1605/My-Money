@@ -172,7 +172,7 @@ export default function BillOverviewPage() {
   for (let y = maxYear; y >= minYear; y--) selectableYears.push(y);
 
   const formatYearLabel = (y: number) =>
-    yearType === "financial" ? `FY ${y}-${(y + 1).toString().slice(-2)}` : String(y);
+    yearType === "financial" ? `${y}-${y + 1}` : String(y);
 
   function handleYearTypeChange(nextYearType: YearType) {
     if (yearType === "financial" && nextYearType === "calendar") {
@@ -185,12 +185,40 @@ export default function BillOverviewPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="app-page mx-auto">
       <PageHeader
         title="Bill Overview"
         description={`Every credit card bill for ${formatYearLabel(year)}, month by month.`}
         actions={
           <>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setYear((y) => y - 1)}
+                disabled={year <= minYear}
+                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous year"
+              >
+                <ChevronLeftIcon />
+              </button>
+              <Select
+                value={year}
+                onChange={setYear}
+                ariaLabel="Select year"
+                className="year-select w-auto min-w-36"
+                options={selectableYears.map((yearOption) => ({
+                  value: yearOption,
+                  label: formatYearLabel(yearOption),
+                }))}
+              />
+              <button
+                onClick={() => setYear((y) => y + 1)}
+                disabled={year >= maxYear}
+                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next year"
+              >
+                <ChevronRightIcon />
+              </button>
+            </div>
             <div
               role="radiogroup"
               aria-label="Year type"
@@ -222,35 +250,6 @@ export default function BillOverviewPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setYear((y) => y - 1)}
-                disabled={year <= minYear}
-                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Previous year"
-              >
-                <ChevronLeftIcon />
-              </button>
-              <Select
-                value={year}
-                onChange={setYear}
-                ariaLabel="Select year"
-                className="w-auto min-w-36"
-                options={selectableYears.map((yearOption) => ({
-                  value: yearOption,
-                  label: formatYearLabel(yearOption),
-                }))}
-              />
-              <button
-                onClick={() => setYear((y) => y + 1)}
-                disabled={year >= maxYear}
-                className="btn-ghost w-11 px-0 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Next year"
-              >
-                <ChevronRightIcon />
-              </button>
-            </div>
-
             {activeCards.length > 0 && (
               <button onClick={() => setShowForm(true)} className="btn-primary">
                 <PlusIcon />
@@ -263,43 +262,40 @@ export default function BillOverviewPage() {
 
       {grid && grid.cards.length > 0 && (
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card-soft p-5">
-            <dt className="label text-[var(--color-text-muted)]">
+          <div className="card-soft flex items-center justify-between gap-2 p-2">
+            <dt className="table-header text-[var(--color-text-muted)]">
               Total billed
             </dt>
-            <dd className="numeric mt-2 text-[32px] font-[652] leading-[1.13]">
+            <dd className="numeric text-[20px] font-[652] leading-[1.3]">
               {formatCurrency(grid.grandTotal)}
             </dd>
           </div>
-          <div className="card-soft p-5">
-            <dt className="label text-[var(--color-text-muted)]">
+          <div className="card-soft flex items-center justify-between gap-2 p-2">
+            <dt className="table-header text-[var(--color-text-muted)]">
               Outstanding
             </dt>
             <dd
-              className={`numeric mt-2 text-[32px] font-[652] leading-[1.13] ${
+              className={`numeric text-[20px] font-[652] leading-[1.3] ${
                 grid.unpaidTotal > 0 ? "text-[var(--color-destructive)]" : ""
               }`}
             >
               {formatCurrency(grid.unpaidTotal)}
             </dd>
-            <p className="caption mt-2 text-[var(--color-text-muted)]">
-              {grid.unpaidTotal > 0 ? "Not yet fully paid" : "All bills settled"}
-            </p>
           </div>
-          <div className="card-soft p-5">
-            <dt className="label text-[var(--color-text-muted)]">
+          <div className="card-soft flex items-center justify-between gap-2 p-2">
+            <dt className="table-header text-[var(--color-text-muted)]">
               Active cards
             </dt>
-            <dd className="numeric mt-2 text-[32px] font-[652] leading-[1.13]">
+            <dd className="numeric text-[20px] font-[652] leading-[1.3]">
               {activeCardsInSelectedPeriod}
             </dd>
           </div>
-          <div className="card-soft p-5">
-            <dt className="label text-[var(--color-text-muted)]">
+          <div className="card-soft flex items-center justify-between gap-2 p-2">
+            <dt className="table-header text-[var(--color-text-muted)]">
               Cards with payments due
             </dt>
             <dd
-              className={`numeric mt-2 text-[32px] font-[652] leading-[1.13] ${
+              className={`numeric text-[20px] font-[652] leading-[1.3] ${
                 cardsWithOutstandingPayments > 0 ? "text-[var(--color-destructive)]" : ""
               }`}
             >
@@ -355,7 +351,7 @@ export default function BillOverviewPage() {
                 setStatementPendingRemoval(null);
                 await handleDeleteStatement();
               }}
-              className="btn-ghost text-[var(--color-destructive)]"
+              className="btn-destructive"
             >
               Remove permanently
             </button>
@@ -376,10 +372,10 @@ export default function BillOverviewPage() {
           <table className="min-w-full w-max table-fixed text-sm">
             <caption className="sr-only">Credit card bills by month</caption>
             <thead>
-              <tr className="border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
+              <tr className="table-data-row border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
                 <th
                   scope="col"
-                  className="label sticky left-0 z-20 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left text-[var(--color-text-muted)]"
+                  className="table-header sticky left-0 z-20 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left"
                 >
                   Month
                 </th>
@@ -387,7 +383,7 @@ export default function BillOverviewPage() {
                   <th
                     key={c.id}
                     scope="col"
-                    className="label w-[var(--table-card-column-width)] px-4 py-2.5 text-right text-[var(--color-text-muted)]"
+                    className="table-header w-[var(--table-card-column-width)] px-4 py-2.5 text-right"
                   >
                     {c.nickname}
                     {!c.is_active && <span className="ml-1 opacity-60">(closed)</span>}
@@ -395,7 +391,7 @@ export default function BillOverviewPage() {
                 ))}
                 <th
                   scope="col"
-                  className="label sticky right-0 z-20 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right text-[var(--color-ink)]"
+                  className="table-header sticky right-0 z-20 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right"
                 >
                   Total
                 </th>
@@ -403,7 +399,7 @@ export default function BillOverviewPage() {
             </thead>
             <tbody>
               {grid.months.map((row) => (
-                <tr key={row.month} className="border-b border-[var(--color-hairline)] last:border-0">
+                <tr key={row.month} className="table-data-row border-b border-[var(--color-hairline)] last:border-0">
                   <th
                     scope="row"
                     className="sticky left-0 z-10 bg-[var(--color-surface)] px-4 py-2 text-left text-[14px] font-[600]"
@@ -442,7 +438,7 @@ export default function BillOverviewPage() {
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t border-[var(--color-hairline)] bg-[var(--color-canvas-soft)] font-[600]">
+              <tr className="table-data-row border-t border-[var(--color-hairline)] bg-[var(--color-canvas-soft)] font-[600]">
                 <th scope="row" className="sticky left-0 z-10 bg-[var(--color-canvas-soft)] px-4 py-3 text-left">
                   Total
                 </th>

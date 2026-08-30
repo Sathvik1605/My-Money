@@ -90,6 +90,18 @@ export function PlusIcon({ className }: IconProps) {
   );
 }
 
+export function TrashIcon({ className }: IconProps) {
+  return (
+    <svg className={`${base} ${className ?? ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+      <path d="M4.5 7.5h15M9.5 4.5h5M7.5 7.5l.75 12h7.5l.75-12M10.5 11v5M13.5 11v5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function DragHandleIcon({ className }: IconProps) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="9" cy="6" r="1" fill="currentColor" /><circle cx="15" cy="6" r="1" fill="currentColor" /><circle cx="9" cy="12" r="1" fill="currentColor" /><circle cx="15" cy="12" r="1" fill="currentColor" /><circle cx="9" cy="18" r="1" fill="currentColor" /><circle cx="15" cy="18" r="1" fill="currentColor" /></svg>;
+}
+
 export function ChevronLeftIcon({ className }: IconProps) {
   return (
     <svg className={`${base} ${className ?? ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
@@ -112,6 +124,10 @@ export function ChevronDownIcon({ className }: IconProps) {
       <path d="m6 9 6 6 6-6" />
     </svg>
   );
+}
+
+export function ChevronUpIcon({ className }: IconProps) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>;
 }
 
 export function SunIcon({ className }: IconProps) {

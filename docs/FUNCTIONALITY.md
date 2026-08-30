@@ -44,10 +44,10 @@ does not appear while viewing calendar year 2025, and cards with no bills do
 not appear in reporting periods.
 
 Switching from a financial year to a calendar year preserves the ending year of
-the selected financial period: **FY 2025-26** opens calendar year **2026**,
-and **FY 2023-24** opens **2024**. It never advances past the present calendar
+the selected financial period: **2025-2026** opens calendar year **2026**,
+and **2023-2024** opens **2024**. It never advances past the present calendar
 year: the current financial year opens the current calendar year.
-The reverse mapping is symmetric: calendar year **2027** opens **FY 2026-27**.
+The reverse mapping is symmetric: calendar year **2027** opens **2026-2027**.
 
 **Only total due is user-entered.** The card and dates are derived from the
 card and shown as read-only static text:
@@ -110,6 +110,142 @@ This prevents a manually-selected status, payment amount, or payment date from c
 Closed cards are retained for history but cannot be edited. The only available
 action is **Reopen card**; after reopening, editing and closing actions return.
 
+## Expenses
+
+Every workspace page, including Expense category and nested subcategory pages,
+shares the same centered application content width, 32px/48px/80px responsive
+left/right gutters, and equal 32px top/bottom spacing. The shared page
+container owns this spacing, so future workspace pages align without custom
+outer padding at every viewport size.
+
+The four Bill Overview summary cards use a compact horizontal label/value
+layout with 8px internal padding, 16px bold labels matching the Month and
+month-name headers, and 20px numeric figures. They retain the same financial
+values while preserving vertical space for the complete annual grid in a
+1440x900 viewport without a page scrollbar.
+
+All interactive transitions use the same 420ms ease-out motion as category
+reordering. This includes the delete-action reveal, so showing or hiding a
+destructive control moves at the same observable pace as its reorder control.
+
+Where a workspace page offers both a direct year picker and Financial/Calendar
+view options, the year picker appears first (to the left of the view options).
+The Financial/Calendar view control uses the shared 44px pill geometry, while
+the year picker uses the same 16px-radius dropdown geometry as all other
+dropdowns. Bill Overview, Expense Entry, and Expense Summary all include the
+same previous/next year controls and keyboard-operable Financial/Calendar
+toggle.
+
+All table headers, including Section and month names, use the same larger bold
+ink header style across the workspace. Expense Summary is the standard: 16px
+semibold ink text on the soft canvas fill with matching cell padding; Bill
+Overview and Expense Entry use this same treatment for every table header.
+
+All financial and expense grid rows (headers, data, and totals) share a fixed compact
+48px height, whether a cell is blank or has an entered amount, so entries never cause
+rows to jump.
+
+Expense Entry includes a Total column for every section, a Total row for every
+month, and a bottom-right grand total. Its category legend uses compact 8px
+markers beside the category labels.
+The legend container has 4px vertical padding, while its category links retain
+44px minimum-height accessible touch targets.
+Category and subcategory page headings use their parent category's green,
+yellow, or red text color. Nested item names use standard ink text.
+When navigating directly between subcategories, the prior page title is never
+shown while the selected subcategory loads; the destination title appears only
+after its data is available.
+When a user opens a subcategory from its parent list, its known label is carried
+into the destination route and displayed immediately; the API response remains
+the authoritative source for the loaded section and its category.
+Every nested expense page exposes an explicit parent link: category pages return
+to all categories, and item pages return to their owning category.
+Income is recorded in an annual month grid. Users can switch between Financial
+and Calendar years, directly select or navigate a year, enter income for each
+month in a vertical Month/Income table, and review the annual income total.
+Closed historical years are read-only until the user explicitly enables editing,
+matching Expense Entry. The selected period controls provide the year, so month
+rows show only the month name. The compact table caps at 480px on wider screens and
+retains the shared rounded table-card corners.
+Its body and total rows use the shared 48px table height.
+Light theme uses brighter but balanced green, yellow, and red pastel category
+surfaces, while dark theme retains deeper counterparts. Both keep the legend
+and category marker visible alongside their text labels.
+The Expense Entry table's scrolling viewport preserves the card's rounded
+bottom corners around its Total footer.
+
+The Expenses module tracks monthly aggregate spending separately from credit
+card bills. It has three fixed categories: Investment, Need, and Want. On a
+user's first Expenses visit, when their Expenses workspace has no sections, the
+app creates the agreed starting sections:
+Need (Food, Snacks, Fruits, Transportation, House, OTT), Want (Trips,
+Shopping, Gifts, Miscellaneous), and Investment (Investments, with Mutual
+Funds, Stocks, and Gold line items). Users may add, rename, or permanently delete sections and
+optional line items; category names remain fixed. Each section and line item
+uses a clean default list. **Delete Sub category** (for its subcategories) or **Delete
+items** (for a section's line items) enters a deletion mode and reveals a red
+icon-only **Delete** action at the far right; the amount shifts left as its
+space expands. Its accessible label names the item being deleted. It requires
+in-app and
+server-validated confirmation: deleting a line item deletes its monthly
+entries, while deleting a section cascades to its line items and all associated
+monthly entries. Default sections are seeded only once, so a deleted default
+section is not recreated on a later page load.
+
+The workspace uses **Income** consistently for money received; it does not use
+the narrower **Salary** term. The Expense Summary therefore displays Income and
+the percentage of income used.
+
+Each category page also provides **Reorder Sub category** at the end of the list.
+It reveals only drag handles for direct manipulation; each handle also supports
+Arrow Up and Arrow Down keyboard reordering. The saved order is persistent and
+is used in the category page and annual Expense Entry grid. Reordering and
+deletion modes cannot be active together. The handle reveals with the same
+smooth transition as delete mode; dragging over another item previews the
+resulting order and gives the target a slight movement before the drop saves it.
+The reorder reveal and row transition take 420ms, making the changing position
+easy to follow.
+
+The main Expenses page defaults to the current calendar year (unlike the credit
+card Bill Overview, which defaults to the financial year). Its header keeps the
+Financial year / Calendar year segmented control, previous/next year controls,
+and compact direct year selector use the same ordering, keyboard behavior, and
+labels as Bill Overview. Its monthly columns alternate the neutral canvas-soft
+and canvas surfaces for easier year-long scanning in both themes; the Section
+header uses the canvas surface to match the dark alternate month column. The
+category legend remains fixed above the table, and category and Section headers
+stay pinned while month columns scroll horizontally. Month headers show their
+month only because the selected year is already shown in the period control;
+that selector has a fixed width for financial-year labels. It is a selected financial
+or calendar year grid, ordered Investment, Need, then Want. The main grid shows
+sections only: a section with underlying items, such as Investments, is
+clickable and opens those items on its dedicated page. A section is permanently
+either direct-entry or
+line-item based: direct section amounts and line items cannot be combined.
+Amounts are one non-negative value per month and are edited directly in their
+grid cell. Items become available from their creation month onward and inactive
+items remain visible only where historical data exists. A missing amount is a
+blank cell, not ₹0; a user-entered zero remains visible as ₹0.
+
+The grid's narrow leftmost column uses a compact color-coded marker that spans
+and groups each category's rows, next to a **Section** column. A
+visible top-left legend identifies green as Investments, yellow as Needs, and
+red as Wants; its category labels are clickable links to section management,
+where sections such as Mutual Funds and Stocks can be added. Category names do
+not repeat inside the grid. Their fixed row order also retains meaning without
+colour. The Summary
+page uses the same saved
+expense-entry and income records;
+it does not collect a second set of values. Its seven summary columns have
+equal widths and scroll within their table container on narrow screens.
+
+Past completed years are read-only by default. Selecting **Edit this year** and
+confirming temporarily unlocks that displayed year for the current visit; a
+year change re-locks it. The separate Income page records one monthly income
+amount, and the Expense Summary page reports Need, Want, Investment, total
+spent, income, and percentage of income used for every month and the selected
+year total.
+
 ## Bill Overview
 
 The home page is the Bill Overview: a 12-month grid of every bill. A segmented control selects **Financial year** (the default) or **Calendar year**. A financial year runs from 1 April of the selected year through 31 March of the next; a calendar year runs from 1 January through 31 December.
@@ -122,7 +258,7 @@ This keeps the overview metrics aligned with its displayed card columns.
 
 For financial years, records from January through March belong to the financial
 year that began in the preceding calendar year. For example, January 2026 makes
-**FY 2025-26** available in the selector.
+**2025-2026** available in the selector.
 
 Rows are months and columns are the user's cards. A cell is the sum of `total_amount_due` for that card's bills whose `statement_date` falls in that month. The page shows row totals, column totals, and a grand total. Closed cards stay in the grid, including zero-value columns, so historical context is retained.
 

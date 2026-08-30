@@ -26,11 +26,147 @@ period.
 Use a true red destructive token in both themes. The dark token must not
 appear pink; retain a minimum 4.5:1 contrast ratio against the dark canvas.
 
+Expenses uses a selected-year grid ordered Investments, Needs, then Wants, with
+sections and line items expanded beneath each category. A section is either
+direct-entry or line-item based and must never mix the two. Seed the agreed
+starting sections on first use. Closed expense years are read-only until the
+user explicitly unlocks the displayed year for that visit.
+Expense Entry defaults to Calendar year; Credit Card Bill Overview continues to
+default to Financial year. Empty expense cells are blank, never a fabricated
+zero. A deliberately saved zero remains visible as ₹0.
+Use green for Investments, yellow for Needs, and red for Wants wherever those
+category labels appear in the Expenses module.
+In the compact Expenses grid, do not repeat category names inside the colored
+row markers; use the visible top legend as their mapping.
+The top Expenses legend category labels are links to their section-management
+pages (for example, Investments manages Mutual Funds and Stocks).
+Default Investment setup is one Investments section with Mutual Funds, Stocks,
+and Gold line items; do not reseed deleted defaults.
+The main Expenses grid displays only sections. Sections with items are
+clickable and open a dedicated item page; never show their nested items in the
+main grid. In deletion mode, the red trash action occupies the far right and
+the amount moves left with the transition.
+Expense Entry keeps Financial year, Calendar year, and direct year selection
+together in its header. Do not add an Income action there until requested.
+Every irreversible permanent-delete confirmation uses the shared solid red
+`btn-destructive` action; ordinary delete-mode entry controls stay outlined.
+Expense Entry must use the exact same period-control composition as Bill
+Overview: Financial year / Calendar year segmented control, previous arrow,
+compact direct year selector, and next arrow. Reuse matching ordering, labels,
+accessible behavior, and tokens for equivalent UI elements across the app; do
+not create page-specific variations without an explicit user request. Alternate
+Expense Entry month columns between `canvas-soft` and `canvas` tokens; this is
+grey/white in light mode and grey/black in dark mode, never a raw colour. The
+sticky Section header uses `canvas`, matching the dark alternate month surface.
+On horizontally scrolling grids, legends stay outside the scroll viewport and
+context columns/headers remain pinned with opaque tokenized surfaces above the
+scrolling data.
+Every workspace page, including category and nested subcategory pages, uses the
+same `.app-page` centered content width and responsive inline gutter. Reuse this
+primitive for all new workspace pages rather than introducing page-specific
+outer padding or widths. `.app-page` owns its 32px top and bottom padding; its
+inline gutters are 32px, 48px, and 80px across responsive breakpoints for
+consistent breathing room.
+Bill Overview's four summary cards use a compact horizontal label/value layout
+with 8px internal padding, 16px bold labels matching the Month and month-name
+headers, and 20px numeric figures. This preserves the shared outer-page
+spacing and lets the complete 12-month Bill Overview fit a 1440x900 viewport
+without vertical page scrolling.
+All application transitions use the shared 420ms ease-out reorder motion,
+including delete reveals, navigation feedback, and control state changes. Do
+not introduce a different transition duration or easing without changing this
+document and `DESIGN.md`.
+All table headers use the shared `.table-header` treatment: 16px semibold.
+Apply it to every header cell, including Section, Month, and named month
+columns; headers must always be bold and visually consistent across tables.
+All financial and expense grid rows, including headers, body rows, and totals, use
+`.table-data-row` with the shared fixed compact 48px height, regardless of whether a
+cell has an entered amount. Reuse it for any new application grid so populated and
+blank rows always align.
+Expense Summary is the canonical table-header standard for every workspace
+grid: 16px semibold `--color-ink` text on `--color-canvas-soft` with
+`px-4 py-2.5` cell padding. New grids must reuse it; data-only alternating
+column surfaces must not alter a table header's typography, color, fill, or
+padding.
+Expense Entry includes a pinned Total column for every section, a Total row
+for every month, and a bottom-right grand total. Its category legend uses
+compact 8px markers beside the category labels.
+Use **Income** everywhere for money received, including UI labels,
+documentation, API terminology, types, and database fields. Do not introduce
+the narrower **Salary** term.
+Keep the Expense Entry category legend visually compact with 4px vertical
+container padding and 12px gaps, while preserving 44px minimum-height category
+links for accessibility.
+Expense Entry's horizontal-scroll table viewport must clip to the parent
+card's 24px lower radius so the Total footer retains rounded bottom corners.
+Use brighter balanced green, yellow, and red pastel category surfaces in light
+theme and deeper counterparts in dark theme, so markers remain clearly visible
+without overpowering either canvas. Retain visible text labels because color is
+never the sole category identifier.
+Color category and subcategory page headings with their parent category's
+green, yellow, or red semantic text token. Keep line-item names in standard
+ink.
+When navigating between nested subcategory pages, never flash a previous,
+generic, or placeholder title; render the destination title only after its
+section data has loaded.
+When opening a nested subcategory from its parent list, carry its known title in
+the route and render it immediately while the API loads authoritative section
+data, avoiding a blank title gap.
+Expense category pages must provide a visible link back to all categories, and
+item pages must provide a visible link back to their parent category.
+Income must use the same annual Financial/Calendar period controls and
+month-by-month treatment as Expense Entry, with visible monthly and annual
+income totals. Income uses a vertical Month/Income table rather than a
+wide month-column grid. Month rows omit the selected year. The compact table
+caps at 480px on wider screens,
+expands on narrow screens, and clips its header and footer to the shared 24px
+table-card corners.
+Income body and total cells must use zero vertical padding around the 44px
+amount control so every grid row honors the shared 48px table-row height.
+When direct year selection and Financial/Calendar view controls are shown
+together, the year picker always comes first, to the left of the segmented
+view control. Apply this period-control order consistently across the app.
+All yearly workspace pages include the shared previous/next year buttons and
+keyboard Arrow Left/Right interaction for their Financial/Calendar segmented
+control.
+Financial/Calendar controls use the shared 44px stadium-pill geometry of
+primary action buttons. A direct year selector is a dropdown and must use the
+standard 16px dropdown radius, not a pill shape.
+On Expense Entry, month headers show month names only because the selected year
+is already visible in the period control. Its fixed-width selector must fit the
+longest financial-year label so switching year modes never changes layout.
+Always display financial years in full `YYYY-YYYY` form (for example,
+`2025-2026`), never as `FY 2025-26`.
+To conserve tokens, do not run validation after every small change. Batch
+related edits and run the targeted/full validation cycle after approximately
+four to five user-requested changes, unless an immediate test is necessary to
+resolve a failure or validate a high-risk behavior.
+Expense sections within each of Investments, Needs, and Wants are persistently
+reorderable. Put the Reorder Sub category action at the end of the category page;
+its mode reveals only a drag handle. The focused handle supports Arrow Up/Arrow
+Down as the accessible alternative; never make drag-and-drop the only reorder
+path, and keep reorder mode mutually exclusive with delete mode.
+The reorder handle reveals with the same smooth width-and-opacity transition as
+the delete action. During dragging, preview the new order and subtly move the
+target row so adjacent items visibly make room before the drop is saved.
+Use the dedicated 420ms reorder duration for the handle reveal and row movement
+so users can clearly follow the changed order. Name the category-management
+actions Add Sub category, Reorder Sub category, and Delete Sub category.
+Expense section and line-item removal permanently deletes the item and all of
+its associated entries. Require explicit server-validated confirmation and use
+the shared destructive-confirmation modal.
+Keep Expense deletion icons hidden by default. A bottom-right Delete category
+or Delete items control must explicitly enter deletion mode before revealing a
+red, icon-only 44px action beside the item name, with an accessible label. The
+section name is the navigation action that opens its line-item page.
+Seed Expense starter sections only when a user's Expense workspace is empty;
+never recreate a user-deleted section on a later request.
+
 When switching Bill Overview from a financial year to a calendar year, select
 the financial year's ending calendar year without exceeding the present calendar
-year (FY 2025-26 becomes calendar 2026).
+year (2025-2026 becomes calendar 2026).
 When switching from calendar to financial, select the financial year ending in
-the current calendar year (calendar 2027 becomes FY 2026-27).
+the current calendar year (calendar 2027 becomes 2026-2027).
 
 ## Core Rule
 
@@ -339,9 +475,11 @@ Additional rules:
 - A field removed from the UI must not be left orphaned in the database. Either drop
   the column in a migration, or document explicitly why it is retained.
 - Dropping a column is destructive — call it out to the user before doing it.
-- Locally, apply migrations with `supabase db reset` (`supabase db push` fails because
-  the project is not linked). **`db reset` wipes local data**, so warn the user and
-  recreate the `test@gmail.com` test account afterwards.
+- Apply new local migrations incrementally to the existing database; never use
+  `supabase db reset` merely to add independent tables or non-destructive
+  schema changes. Existing users and application data must survive every
+  migration. Use a reset only when the user has explicitly approved data loss
+  and no safe incremental migration is possible.
 - Never leave a `NOT NULL` column without a value path. If the UI stops collecting it,
   the API must derive it or the migration must drop/relax it.
 

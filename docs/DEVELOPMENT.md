@@ -26,4 +26,15 @@ Use `http://127.0.0.1:54323` for Supabase Studio. Authentication users appear un
 | `supabase stop` | Stop local Supabase services. |
 | `supabase status` | Display local endpoints and credentials. |
 
-There is currently no automated test script. Validate changes with the focused lint/build command and manual browser checks for affected flows. After changing `supabase/migrations`, reset or apply the local database as appropriate and keep `src/types/database.ts` synchronized.
+## Applying local migrations safely
+
+Apply each new migration incrementally to the existing local database. Do not
+use `supabase db reset` merely to add tables or make non-destructive schema
+changes: it wipes authentication users and application data. Preserve existing
+data across all routine changes. A reset is only appropriate when it is
+unavoidable and the user has explicitly approved the resulting data loss.
+
+There is currently no automated test script. Validate changes with the focused
+lint/build command and manual browser checks for affected flows. After changing
+`supabase/migrations`, apply the new migration without resetting data and keep
+`src/types/database.ts` synchronized.

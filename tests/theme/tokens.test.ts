@@ -48,6 +48,10 @@ const TEXT_TOKENS = [
   "--color-destructive",
   "--color-positive",
 ];
+const EXPENSE_CATEGORY_TOKENS = [
+  "--color-expense-investment",
+  "--color-expense-need",
+];
 
 describe("theme tokens", () => {
   it("removes number spinners while preserving semantic number inputs", () => {
@@ -97,6 +101,20 @@ describe("theme tokens", () => {
 
   it.each(TEXT_TOKENS)("meets 4.5:1 for %s on the dark canvas", (token) => {
     expect(contrast(dark[token], dark["--color-canvas"])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(EXPENSE_CATEGORY_TOKENS)(
+    "keeps %s readable on both theme canvases",
+    (token) => {
+      expect(contrast(light[token], light["--color-canvas"])).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(dark[token], dark["--color-canvas"])).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it("uses visible but balanced category surfaces in the light theme", () => {
+    expect(light["--color-expense-investment-surface"]).toBe("#a9dfbb");
+    expect(light["--color-expense-need-surface"]).toBe("#ffe08a");
+    expect(light["--color-expense-want-surface"]).toBe("#ffbaba");
   });
 
   it("keeps muted text readable on the soft canvas tint in both themes", () => {

@@ -50,3 +50,20 @@ The table checks that cycle end is on or after cycle start. `statements_card_id_
 ## Access control and data flow
 
 Both tables use Row Level Security. A user can only select, insert, update, or delete cards where `cards.user_id = auth.uid()`. Statement policies derive ownership by checking that the linked card is owned by `auth.uid()`. API handlers attach the authenticated Supabase session to their database client, so RLS receives the correct `auth.uid()`.
+# Expenses tables
+
+`expense_sections`, `expense_line_items`, `expense_entries`, and
+`monthly_income` are all scoped to `auth.users` using RLS. Sections belong to a
+fixed Need, Want, or Investment category; line items belong to sections; and
+entries belong to a user, section, optional line item, and first-of-month date.
+Unique indexes allow one direct section entry or one entry per line item for a
+month. The `validate_expense_entry` trigger verifies ownership, parentage, and
+prevents mixing direct and line-item entries in a section/month.
+Each section has a `sort_order` that is unique in practice within its user's
+category; each line item has a `sort_order` within its section. Migration
+`20260830060000_add_expense_sort_order.sql` backfills both values from the
+existing creation order and indexes their parent/order keys for ordered reads.
+Migration `20260830050000_restructure_investment_defaults.sql` consolidates
+the default Investment sections into an Investments section and converts
+Mutual Funds, Stocks, and Gold entries to their respective line items. It
+permanently removes PPF and Silver sections and their entries.

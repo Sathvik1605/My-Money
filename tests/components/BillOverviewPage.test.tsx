@@ -168,6 +168,6 @@ describe("Bill Overview", () => {
     await screen.findByText("2026");
     await user.click(screen.getByRole("radio", { name: "Financial year" }));
 
-    expect(await screen.findByText("FY 2025-26")).toBeInTheDocument();
+    expect(await screen.findByText("2025-2026")).toBeInTheDocument();
   });
 });

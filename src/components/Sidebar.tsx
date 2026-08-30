@@ -34,9 +34,16 @@ const NAV_GROUPS: { heading: string; items: NavItem[] }[] = [
     ],
   },
   {
+    heading: "Expenses",
+    items: [
+      { href: "/expenses", label: "Expense Entry", icon: WalletIcon },
+      { href: "/expenses/income", label: "Income", icon: WalletIcon },
+      { href: "/expenses/summary", label: "Summary", icon: GridIcon },
+    ],
+  },
+  {
     heading: "Coming Soon",
     items: [
-      { href: "/expenses", label: "Expenses", icon: WalletIcon, comingSoon: true },
       { href: "/mutual-funds", label: "Mutual Funds", icon: ChartIcon, comingSoon: true },
       { href: "/stocks", label: "Stocks", icon: TrendIcon, comingSoon: true },
     ],
@@ -109,7 +116,7 @@ export function Sidebar() {
                       href={item.href}
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex min-h-11 items-center gap-3 rounded-full px-4 text-[14px] font-[600] transition-colors ${
+                      className={`flex min-h-11 items-center gap-3 rounded-full px-4 text-[14px] font-[600] transition-colors duration-[var(--duration-standard)] ease-out ${
                         isActive
                           ? "bg-[var(--color-canvas-soft)] text-[var(--color-ink)]"
                           : "text-[var(--color-text-muted)] hover:bg-[var(--color-canvas-soft)] hover:text-[var(--color-ink)]"

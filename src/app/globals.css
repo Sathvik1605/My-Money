@@ -49,7 +49,15 @@
    * and to meet 4.5:1 on canvas. Status is never signalled by colour alone.
    */
   --color-destructive: #c81e1e;
+  --color-on-destructive: #ffffff;
   --color-positive: #0f7b3f;
+  /* Expense categories (project addition): user-requested semantic labels. */
+  --color-expense-investment: #0f7b3f;
+  --color-expense-need: #806000;
+  --color-expense-want: var(--color-destructive);
+  --color-expense-investment-surface: #a9dfbb;
+  --color-expense-need-surface: #ffe08a;
+  --color-expense-want-surface: #ffbaba;
 
   /* spacing.* */
   --space-xxs: 4px;
@@ -74,8 +82,12 @@
   --font-weight-light: 300;
 
   --sidebar-width: 16rem;
-  --duration-fast: 150ms;
-  --duration-base: 220ms;
+  --content-width: 1440px;          /* DESIGN.md: Shared application page gutter (project addition). */
+  --table-row-height: var(--space-xxl); /* DESIGN.md: Table data rows (project addition). */
+  --duration-standard: 420ms;       /* DESIGN.md: Shared application motion (project addition). */
+  --duration-fast: var(--duration-standard);
+  --duration-base: var(--duration-standard);
+  --duration-reorder: var(--duration-standard);
 
   color-scheme: light;
 }
@@ -110,7 +122,14 @@
 
   /* EXTENSION (see note above) — restated for the dark surface. */
   --color-destructive: #ef4444;    /* true red, 4.6:1 on canvas */
+  --color-on-destructive: #141414;
   --color-positive: #4ade80;       /* 10.6:1 on canvas */
+  --color-expense-investment: #4ade80;
+  --color-expense-need: #facc15;
+  --color-expense-want: var(--color-destructive);
+  --color-expense-investment-surface: #153d27;
+  --color-expense-need-surface: #453b0d;
+  --color-expense-want-surface: #4b2020;
 
   color-scheme: dark;
 }
@@ -133,6 +152,25 @@ body {
   font-size: 16px;                        /* typography.body */
   font-weight: var(--font-weight-body);
   line-height: 1.38;
+}
+
+/* DESIGN.md: Shared application page gutter (project addition). */
+.app-page {
+  width: min(100%, var(--content-width));
+  padding-inline: var(--space-xl);
+  padding-block: var(--space-xl);
+}
+
+@media (min-width: 640px) {
+  .app-page {
+    padding-inline: var(--space-xxl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-page {
+    padding-inline: var(--space-section);
+  }
 }
 
 /* typography.heading-* — chunky 652 with tight line-height. */
@@ -160,6 +198,19 @@ h4 { font-size: 16px; line-height: 1.38; font-weight: var(--font-weight-semibold
   font-size: 12px;
   font-weight: var(--font-weight-semibold);
   line-height: 1.33;
+}
+
+/* DESIGN.md: Table headers (project addition). */
+.table-header {
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.38;
+}
+
+/* DESIGN.md: Table data rows (project addition). */
+.table-data-row {
+  height: var(--table-row-height);
 }
 
 /* typography.caption */
@@ -234,7 +285,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .dropdown-chevron {
   color: var(--color-text-muted);
-  transition: transform var(--duration-fast) ease, color var(--duration-fast) ease;
+  transition: transform var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 .dropdown-trigger:focus-visible .dropdown-chevron,
@@ -334,11 +385,37 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: var(--font-weight-semibold);
   line-height: 1.38;
   cursor: pointer;
-  transition: background-color var(--duration-fast) ease;
+  transition: background-color var(--duration-fast) ease-out;
 }
 
 .btn-primary:hover {
   background: var(--color-ink-soft);
+}
+
+.btn-destructive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 2.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-destructive);
+  color: var(--color-on-destructive);
+  padding: 0 var(--space-md);
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.38;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) ease-out;
+}
+
+.btn-destructive:hover {
+  opacity: 0.88;
+}
+
+.btn-destructive:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .btn-primary:disabled {
@@ -361,7 +438,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 16px;
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color var(--duration-fast) ease;
+  transition: background-color var(--duration-fast) ease-out;
 }
 
 .btn-ghost:hover {
@@ -405,7 +482,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+  transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 .segmented-option:hover {
@@ -454,7 +531,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid var(--color-hairline);
   background: var(--color-canvas-soft);
   cursor: pointer;
-  transition: background-color var(--duration-base) ease, border-color var(--duration-base) ease;
+  transition: background-color var(--duration-base) ease-out, border-color var(--duration-base) ease-out;
 }
 
 .switch[data-state="true"] {
@@ -470,7 +547,7 @@ input[type="number"]::-webkit-outer-spin-button {
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
   transform: translateX(0.1875rem);
-  transition: transform var(--duration-base) cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-base) ease-out;
 }
 
 .switch[data-state="true"]::after {
@@ -509,9 +586,9 @@ body,
 .btn-ghost,
 .btn-soft {
   transition:
-    background-color var(--duration-base) ease,
-    border-color var(--duration-base) ease,
-    color var(--duration-base) ease;
+    background-color var(--duration-base) ease-out,
+    border-color var(--duration-base) ease-out,
+    color var(--duration-base) ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

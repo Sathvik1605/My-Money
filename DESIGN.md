@@ -560,3 +560,188 @@ The system is essentially shadow-free: no drop shadows appear on any card, butto
 - Don't put borders on form fields at rest — inputs are `{colors.field}` tint fills; the border appears only as the 2px ink focus ring.
 - Don't let full-color photography of people into the curator/juror grids; portraits are strictly black-and-white.
 - Don't square off pill geometry at small sizes — badges, chips, and toggles stay stadium-shaped.
+
+## Project additions
+
+### Expense category signals
+
+The Expenses grid uses user-requested semantic text colours only for the
+clickable category labels: green for Investments, yellow for Needs, and red for
+Wants. This deliberately extends the monochrome system so the three financial
+domains are scannable without adding coloured bands or controls. Labels remain
+visible text, ordered consistently, and carry accessible names; colour is not
+the sole means of identification. Each token has a light and dark counterpart
+that clears 4.5:1 contrast on its canvas.
+
+The compact Expenses grid uses a narrow left marker column with a tinted,
+color-coded marker spanning each category's rows. A text legend sits at the
+top-left of the grid and maps the green, yellow, and red markers to Investments,
+Needs, and Wants.
+
+### Expense hierarchy and deletion controls
+
+The primary Expenses grid is intentionally section-level. Sections that own
+child items present their label as the navigation affordance rather than
+expanding subordinate rows, keeping the annual grid scannable. Item detail is
+shown only on the section page.
+
+List deletion is a deliberate mode: enabling it expands a 44px action slot at
+the far right with the destructive token while the monetary value moves left.
+The slot animates width and opacity for spatial continuity, and the global
+reduced-motion rule suppresses that animation. The icon control retains its
+accessible item-specific label and confirmation remains a separate modal step.
+
+### Destructive confirmation action
+
+Destructive confirmation dialogs use the shared solid `btn-destructive` pill:
+the project destructive red is the button fill and `--color-on-destructive`
+provides a contrast-safe foreground in each polarity. Secondary delete-entry
+controls remain outlined red so only the irreversible confirmation is visually
+dominant.
+
+### Expense Entry period and columns
+
+Expense Entry uses the same year-control composition as Bill Overview: a
+keyboard-operable Financial year / Calendar year segmented control followed by
+previous-year, compact direct year selector, and next-year controls. The year
+selector is sized only for its label. Annual month columns alternate between
+`canvas-soft` and `canvas`, which becomes a grey/black cadence in dark theme
+and a grey/white cadence in light theme. The sticky Section header uses
+`canvas`, matching the dark alternate month surface. This uses the existing
+tint ladder, maintains readable contrast, and avoids introducing a new
+decorative colour.
+
+Expense Entry month headers show only month names because the selected period
+is already explicit in the shared year control. Its selector uses a fixed
+width that accommodates the longest financial-year label as well as a calendar year, so
+the header does not shift when the mode changes.
+
+The category legend is outside the table's horizontal scrolling viewport.
+Within that viewport, category and Section headers are pinned above month cells
+with the correct canvas surfaces, so the financial context remains visible as
+months move horizontally.
+
+### Shared controls
+
+Where two pages express the same concept, they use the same component,
+ordering, accessible labels, states, and tokens. In particular, period
+selection must not become a page-specific variation: all annual financial and
+calendar views use the year-control composition above. New variations require
+an explicit documented user need.
+
+### Shared application page gutter
+
+Every workspace page, including category and nested subcategory pages, uses the
+same centered `app-page` container, with a 1440px maximum content width,
+responsive 32px, 48px, and 80px inline gutters, and equal 32px top and bottom
+spacing. `app-page` owns this outer spacing so future pages inherit the
+contract without page-specific padding. This gives workspace content more
+breathing room while keeping navigation and page content aligned without
+constraining table scrolling inside individual cards.
+
+### Bill Overview summary cards (project addition)
+
+The four period-summary cards use a single horizontal label/value row, with
+8px internal padding, 16px bold labels matching table headers, and 20px
+numeric figures. This preserves the 32px page rhythm while ensuring Bill
+Overview's complete 12-month grid fits a 1440x900 viewport without a vertical
+page scrollbar.
+
+### Shared application motion (project addition)
+
+Every UI transition uses the same 420ms `ease-out` motion as Expense
+reordering. This includes delete-action reveals, control state changes, and
+navigation feedback, making every change deliberate and visually consistent.
+Reduced-motion preferences still suppress these transitions.
+
+### Table headers
+
+All application tables use the shared `table-header` treatment: 16px text at
+the semibold weight. This raises headers one step above compact table copy and
+keeps labels such as Section, Month, and every named month visually prominent
+and consistent across financial views.
+
+### Table data rows
+
+All financial and expense grids use the shared compact `table-data-row` height
+of 48px on header, body, and totals rows. Empty cells retain this height,
+matching cells with an editable amount, so every visible grid row stays aligned
+as data is added or removed.
+
+### Workspace table headers (project addition)
+
+Expense Summary defines the canonical table-header treatment for every
+financial grid: 16px semibold ink text, `canvas-soft` fill, and 16px
+horizontal with 10px vertical cell padding. Bill Overview and Expense Entry
+apply this treatment to every header; only Expense Entry's data columns
+alternate surfaces for year-long scanning.
+
+### Expense Entry totals and markers (project addition)
+
+Expense Entry shows a Total column for every section and a Total row for every
+month, with the bottom-right cell as the grand total. These total cells use the
+same fixed row height, ink table-header treatment, and pinned-edge behavior as
+the Bill Overview total. Category legend markers use compact 8px circles so
+they support, rather than compete with, the category label.
+The supporting legend row uses 4px vertical padding and 12px gaps, while its
+linked categories retain 44px minimum-height touch targets.
+The table's horizontal-scroll viewport clips to the parent card's 24px lower
+radius so the Total footer preserves the surface's rounded bottom corners.
+Light theme uses brighter, balanced green, yellow, and red pastels for the
+investment, need, and want surfaces so they remain visible without overpowering
+the white canvas. Dark theme retains its deeper counterparts. Text labels remain
+the non-color-only identifier.
+Each category or subcategory page heading inherits its parent category's green,
+yellow, or red semantic text token. Line-item names retain the standard ink
+treatment.
+Nested category navigation never presents a generic or previous title during
+loading. The heading is introduced only once the selected section is known;
+the interim status is visually hidden but announced to assistive technology.
+When a nested page is opened from its parent list, its title and its
+parent-category semantic color are rendered immediately from the route; loaded
+section data then replaces the navigation hint without changing the visible
+hierarchy.
+Nested expense pages place a visible ghost-button parent link in the page-header
+action area: category pages return to all categories, and item pages return to
+the parent category. These links use normal route navigation to preserve browser
+history.
+
+### Income yearly grid (project addition)
+
+Income uses the same annual period controls as Expense Entry, but keeps its
+single measure compact and readable in a vertical two-column grid: months are
+rows and the income amount is right-aligned beside each one. The grid ends with
+an annual total footer. Month labels omit the already-selected year. It is
+capped at 480px on wider screens and expands to
+the available width on narrow screens. The table is clipped to the shared
+24px card radius so the header and total surfaces follow every corner.
+Income body and footer cells use zero vertical padding so their 44px amount
+control fits within the shared 48px table-row height rather than expanding it.
+
+### Workspace period controls (project addition)
+
+Whenever a page offers a direct year picker alongside Financial year and
+Calendar year controls, place the year picker first, on the left. This keeps
+the selected period before its interpretation and is consistent across Bill
+Overview, Expense Entry, and Expense Summary.
+
+The Financial/Calendar control retains the shared 44px stadium-pill geometry
+used by primary actions. Direct year selection is a dropdown and therefore
+uses the standard 16px input/dropdown radius rather than a pill shape.
+Every yearly page includes matching previous/next year controls and keyboard
+Arrow Left/Right behavior for the Financial/Calendar segmented control.
+
+### Expense reordering
+
+Each category page places **Reorder Sub category** at the end of its list.
+Entering this deliberate mode reveals only a neutral six-dot drag handle beside
+each section. The handle supports keyboard Arrow Up / Arrow Down reordering as
+an accessible alternative to dragging. Reorder mode is mutually exclusive with
+deletion mode to prevent accidental destructive actions. The handle expands
+from its reserved side slot with the same width-and-opacity transition as the
+delete action. While dragging across another row, the proposed order previews
+immediately and the target subtly moves, providing spatial feedback before the
+order is saved on drop.
+The reorder reveal and row movement use the dedicated 420ms ease-out duration,
+slower than a standard control transition so the changing order remains easy to
+follow.

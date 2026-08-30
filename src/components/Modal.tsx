@@ -15,14 +15,19 @@ interface ModalProps {
  */
 export function Modal({ title, onClose, children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
   const headingId = `modal-title-${title.replace(/\s+/g, "-").toLowerCase()}`;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     panelRef.current?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     }
 
     document.addEventListener("keydown", onKeyDown);
@@ -34,7 +39,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--color-scrim)] p-4 sm:items-center">
