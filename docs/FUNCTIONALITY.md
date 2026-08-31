@@ -43,6 +43,16 @@ selected calendar or financial year. A card whose first bill belongs to 2026
 does not appear while viewing calendar year 2025, and cards with no bills do
 not appear in reporting periods.
 
+Card columns are equally distributed across the available table width, each
+with a 184px minimum. The pinned Month and Total columns use a compact 160px
+minimum because they contain only brief labels and values. If the combined
+minimum does not fit, the rounded table surface scrolls horizontally without
+causing page-level overflow. Month and Total remain pinned while card columns
+scroll. When card columns are off-screen, a 16px directional gradient remains
+fixed to the relevant pinned edge column: Total toward hidden later cards or
+Month toward hidden earlier cards. It disappears once that direction has no
+hidden columns.
+
 Switching from a financial year to a calendar year preserves the ending year of
 the selected financial period: **2025-2026** opens calendar year **2026**,
 and **2023-2024** opens **2024**. It never advances past the present calendar
@@ -127,6 +137,8 @@ values while preserving vertical space for the complete annual grid in a
 All interactive transitions use the same 420ms ease-out motion as category
 reordering. This includes the delete-action reveal, so showing or hiding a
 destructive control moves at the same observable pace as its reorder control.
+The global light/dark palette transition is intentionally faster at 240ms, so
+the full-page color change feels responsive without flashing.
 
 Where a workspace page offers both a direct year picker and Financial/Calendar
 view options, the year picker appears first (to the left of the view options).
@@ -150,6 +162,8 @@ month, and a bottom-right grand total. Its category legend uses compact 8px
 markers beside the category labels.
 The legend container has 4px vertical padding, while its category links retain
 44px minimum-height accessible touch targets.
+Expense Entry uses 12px category strips; its pinned Section column begins
+immediately after each strip while the month data scrolls.
 Category and subcategory page headings use their parent category's green,
 yellow, or red text color. Nested item names use standard ink text.
 When navigating directly between subcategories, the prior page title is never
@@ -168,6 +182,10 @@ matching Expense Entry. The selected period controls provide the year, so month
 rows show only the month name. The compact table caps at 480px on wider screens and
 retains the shared rounded table-card corners.
 Its body and total rows use the shared 48px table height.
+Two-column financial tables and category/item data lists use the centered
+compact-table layout on wider screens while remaining full-width on smaller
+screens. They cap at 720px, and their page title, header controls, notices, and
+footer actions share the same centered width.
 Light theme uses brighter but balanced green, yellow, and red pastel category
 surfaces, while dark theme retains deeper counterparts. Both keep the legend
 and category marker visible alongside their text labels.

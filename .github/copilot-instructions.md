@@ -76,6 +76,9 @@ All application transitions use the shared 420ms ease-out reorder motion,
 including delete reveals, navigation feedback, and control state changes. Do
 not introduce a different transition duration or easing without changing this
 document and `DESIGN.md`.
+The light/dark palette cross-fade is the explicit exception: it uses a dedicated
+240ms ease-out duration so full-workspace repainting feels immediate. Preserve
+the global reduced-motion override.
 All table headers use the shared `.table-header` treatment: 16px semibold.
 Apply it to every header cell, including Section, Month, and named month
 columns; headers must always be bold and visually consistent across tables.
@@ -118,11 +121,20 @@ Income must use the same annual Financial/Calendar period controls and
 month-by-month treatment as Expense Entry, with visible monthly and annual
 income totals. Income uses a vertical Month/Income table rather than a
 wide month-column grid. Month rows omit the selected year. The compact table
-caps at 480px on wider screens,
+caps at 720px on wider screens,
 expands on narrow screens, and clips its header and footer to the shared 24px
 table-card corners.
 Income body and total cells must use zero vertical padding around the 44px
 amount control so every grid row honors the shared 48px table-row height.
+Expense Entry category strips are 12px wide. Keep its sticky Section header
+and cells pinned at the matching 12px offset whenever the strip changes.
+Two-column data surfaces, including tables and category or line-item lists, use
+the shared `.table-compact` primitive: full width on narrow screens, capped at
+720px and centered on wider screens, while retaining the standard card corners,
+table headers, and 48px rows where applicable.
+Wrap each compact page's header, title, notices, and footer actions in the
+matching non-clipping `.content-compact` width so they align with the table or
+list without clipping menus or modals.
 When direct year selection and Financial/Calendar view controls are shown
 together, the year picker always comes first, to the left of the segmented
 view control. Apply this period-control order consistently across the app.
@@ -496,10 +508,15 @@ Additional rules:
   that began the preceding calendar year, so every recorded bill is reachable.
 - The Bill Overview's Month and Total columns must remain pinned while its card
   columns scroll horizontally within the table container.
-- Every Bill Overview card column has a fixed 240px width whether empty or
-  populated, so adding data never reflows the card columns.
-- Keep the pinned Total column narrower than card columns because it contains
-  only a summary value.
+- Bill Overview card columns have a shared 184px minimum and distribute remaining
+  table width equally. The pinned Month and Total columns have a narrower 160px
+  minimum; otherwise, preserve the rounded table surface's internal horizontal
+  scroll.
+- When Bill Overview has card columns off-screen, apply a static, visible 16px
+  hairline-to-transparent gradient directly to the relevant pinned column:
+  Total extends leftward for hidden later columns and Month extends rightward
+  after users scroll. Remove arrows, and show the gradient only while columns
+  remain in that direction.
 
 ## Testing Rules
 

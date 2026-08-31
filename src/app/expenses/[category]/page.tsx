@@ -150,6 +150,7 @@ export default function ExpenseCategoryPage() {
 
   return (
     <main className="app-page mx-auto">
+      <div className="content-compact">
       <PageHeader
         title={EXPENSE_CATEGORY_LABELS[category]}
         titleClassName={categoryColors[category]}
@@ -157,7 +158,7 @@ export default function ExpenseCategoryPage() {
         actions={<Link className="btn-ghost" href="/expenses">Back to all categories</Link>}
       />
       {error && <p role="alert" className="mt-4 text-[var(--color-destructive)]">{error}</p>}
-      <ul className="card-surface mt-6 divide-y divide-[var(--color-hairline)]">
+      <ul className="card-surface table-compact mt-6 divide-y divide-[var(--color-hairline)]">
         {visibleSections.map((section) => {
           const usesLineItems = sectionUsesLineItems(section.id, lineItems);
           const amount = amountForSection(section.id, entries, lineItems);
@@ -210,6 +211,7 @@ export default function ExpenseCategoryPage() {
           <button type="button" className="btn-ghost" onClick={() => { setReorderingSections((current) => !current); setDeletingSections(false); }} aria-pressed={reorderingSections}>{reorderingSections ? "Done reordering" : "Reorder Sub category"}</button>
           <button type="button" className={`btn-ghost ${deletingSections ? "text-[var(--color-destructive)]" : ""}`} onClick={() => { setDeletingSections((current) => !current); setReorderingSections(false); }} aria-pressed={deletingSections}>{deletingSections ? "Done deleting" : "Delete Sub category"}</button>
         </div>
+      </div>
       </div>
       {adding && (
         <Modal title={`Add ${category} Sub category`} onClose={() => setAdding(false)}>

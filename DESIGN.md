@@ -647,12 +647,37 @@ numeric figures. This preserves the 32px page rhythm while ensuring Bill
 Overview's complete 12-month grid fits a 1440x900 viewport without a vertical
 page scrollbar.
 
+### Bill Overview equal columns (project addition)
+
+The Bill Overview's card columns share one equal-width contract with a 184px
+minimum derived from three `section` spacing units less one `xxl` and one `xs`
+step. The pinned Month and Total
+edge columns use a smaller 160px minimum derived from two `section` units,
+which keeps their brief labels compact without clipping them. When the table
+has spare horizontal room, its fixed table layout gives that remaining space to
+the card columns equally; when the combined minimum exceeds its card surface,
+the surface alone scrolls horizontally. Month and Total remain pinned over
+their respective surface colors while the intermediate card columns scroll.
+
+When card columns are off-screen, a clearly visible 16px hairline-to-transparent
+gradient band is anchored directly to the relevant pinned column. The fixed
+Total column's band extends left while later cards are hidden; after the grid
+moves, the fixed Month column's band extends right while earlier cards are
+hidden. It appears only in its relevant direction, has no chevrons or separate
+controls, and cannot move with the scrollable content.
+
 ### Shared application motion (project addition)
 
-Every UI transition uses the same 420ms `ease-out` motion as Expense
+Every interactive UI transition uses the same 420ms `ease-out` motion as Expense
 reordering. This includes delete-action reveals, control state changes, and
 navigation feedback, making every change deliberate and visually consistent.
 Reduced-motion preferences still suppress these transitions.
+
+#### Theme transition (project addition)
+
+Light/dark palette changes use a dedicated 240ms `ease-out` color cross-fade.
+This is intentionally faster than interaction motion because the change repaints
+the full workspace and should feel immediate, while still avoiding a hard flash.
 
 ### Table headers
 
@@ -685,6 +710,8 @@ the Bill Overview total. Category legend markers use compact 8px circles so
 they support, rather than compete with, the category label.
 The supporting legend row uses 4px vertical padding and 12px gaps, while its
 linked categories retain 44px minimum-height touch targets.
+Expense Entry category strips are 12px wide, with the sticky Section column
+offset by the same 12px so horizontal scrolling preserves column alignment.
 The table's horizontal-scroll viewport clips to the parent card's 24px lower
 radius so the Total footer preserves the surface's rounded bottom corners.
 Light theme uses brighter, balanced green, yellow, and red pastels for the
@@ -717,6 +744,17 @@ the available width on narrow screens. The table is clipped to the shared
 24px card radius so the header and total surfaces follow every corner.
 Income body and footer cells use zero vertical padding so their 44px amount
 control fits within the shared 48px table-row height rather than expanding it.
+
+### Compact two-column tables (project addition)
+
+Two-column data surfaces use the shared `.table-compact` primitive, including
+semantic tables and category or line-item lists: they remain full-width on
+narrow screens, cap at 720px, and center horizontally in the wider application
+canvas. They retain the standard `.card-surface` 24px corner treatment and,
+where present, the table header and row primitives.
+Their page header, title, notices, and footer actions sit inside the matching
+non-clipping `.content-compact` wrapper, so each compact page has one aligned
+vertical edge without constraining dropdown menus or modal content.
 
 ### Workspace period controls (project addition)
 

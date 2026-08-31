@@ -175,21 +175,21 @@ export default function ExpensesPage() {
           <table className="min-w-max w-full text-sm">
           <caption className="sr-only">Expenses by category, section, and month</caption>
           <thead><tr className="table-data-row border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
-            <th className="table-header sticky left-0 z-20 w-6 bg-[var(--color-canvas-soft)] px-1 py-2.5 text-left">
+            <th className="table-header sticky left-0 z-20 w-3 bg-[var(--color-canvas-soft)] px-1 py-2.5 text-left">
               <span className="sr-only">Expense category</span>
             </th>
-            <th className="table-header sticky left-6 z-20 min-w-52 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left">Section</th>
+            <th className="table-header sticky left-3 z-20 min-w-52 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left">Section</th>
             {months.map((month) => <th key={month} className="table-header min-w-32 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right">{new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" }).format(new Date(`${month}T00:00:00Z`))}</th>)}
             <th className="table-header sticky right-0 z-20 min-w-36 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right">Total</th>
           </tr></thead>
           <tbody>{categoryGroups.flatMap(({ category, rows }) => rows.map((row, rowIndex) => (
             <tr key={row.id} className="table-data-row border-b border-[var(--color-hairline)]">
               {rowIndex === 0 && (
-                <th scope="rowgroup" rowSpan={rows.length} className={`sticky left-0 z-10 w-6 px-1 py-3 text-left align-top ${CATEGORY_SURFACES[category]}`}>
+                <th scope="rowgroup" rowSpan={rows.length} className={`sticky left-0 z-10 w-3 px-1 py-3 text-left align-top ${CATEGORY_SURFACES[category]}`}>
                   <span className="sr-only">{EXPENSE_CATEGORY_LABELS[category]}</span>
                 </th>
               )}
-              <th scope="row" className="sticky left-6 z-10 bg-[var(--color-canvas)] px-4 py-3 text-left">
+              <th scope="row" className="sticky left-3 z-10 bg-[var(--color-canvas)] px-4 py-3 text-left">
                 {sectionUsesLineItems(row.section.id, lineItems) ? (
                   <Link href={`/expenses/${row.section.category.toLowerCase()}/${row.section.id}`} className="font-semibold hover:underline">
                     {row.name}

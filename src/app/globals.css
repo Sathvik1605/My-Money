@@ -8,9 +8,9 @@
  * value that has no origin in DESIGN.md.
  */
 :root {
-  /* DESIGN.md: Bill Overview Pinned Columns (project addition). */
-  --table-card-column-width: calc(var(--space-section) * 3);
-  --table-total-column-width: calc(var(--space-section) + var(--space-xl));
+  /* DESIGN.md: Bill Overview Equal Columns (project addition). */
+  --table-card-column-width: calc((var(--space-section) * 3) - var(--space-xxl) - var(--space-xs));
+  --table-edge-column-width: calc(var(--space-section) * 2);
   /* colors.* — gallery-white monochrome. Chroma belongs to content, not chrome. */
   --color-primary: #141414;        /* colors.primary  */
   --color-on-primary: #ffffff;     /* colors.on-primary */
@@ -86,7 +86,7 @@
   --table-row-height: var(--space-xxl); /* DESIGN.md: Table data rows (project addition). */
   --duration-standard: 420ms;       /* DESIGN.md: Shared application motion (project addition). */
   --duration-fast: var(--duration-standard);
-  --duration-base: var(--duration-standard);
+  --duration-base: 240ms;            /* DESIGN.md: Theme transition (project addition). */
   --duration-reorder: var(--duration-standard);
 
   color-scheme: light;
@@ -211,6 +211,70 @@ h4 { font-size: 16px; line-height: 1.38; font-weight: var(--font-weight-semibold
 /* DESIGN.md: Table data rows (project addition). */
 .table-data-row {
   height: var(--table-row-height);
+}
+
+/* DESIGN.md: Bill Overview Equal Columns (project addition). */
+.bill-overview-table {
+  width: 100%;
+  min-width: calc(
+    (var(--bill-card-column-count) * var(--table-card-column-width)) +
+      (var(--table-edge-column-width) * 2)
+  );
+  table-layout: fixed;
+}
+
+/* DESIGN.md: Bill Overview Equal Columns (project addition). */
+.bill-overview-table {
+  --bill-overview-edge-cue-width: var(--space-md);
+}
+
+.bill-overview-table col:first-child,
+.bill-overview-table col:last-child {
+  width: var(--table-edge-column-width);
+}
+
+/* DESIGN.md: Bill Overview Equal Columns (project addition). */
+.bill-overview-has-left-overflow tr > :first-child {
+  position: sticky;
+}
+
+.bill-overview-has-left-overflow tr > :first-child::after {
+  background: linear-gradient(to right, var(--color-hairline), transparent);
+  content: "";
+  inset-block: 0;
+  left: 100%;
+  pointer-events: none;
+  position: absolute;
+  width: var(--bill-overview-edge-cue-width);
+}
+
+.bill-overview-has-right-overflow tr > :last-child {
+  position: sticky;
+}
+
+.bill-overview-has-right-overflow tr > :last-child::before {
+  background: linear-gradient(to left, var(--color-hairline), transparent);
+  content: "";
+  inset-block: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 100%;
+  width: var(--bill-overview-edge-cue-width);
+}
+
+/* DESIGN.md: Compact two-column tables (project addition). */
+.table-compact {
+  width: 100%;
+  max-width: calc(var(--space-section) * 9);
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+/* DESIGN.md: Compact two-column tables (project addition). */
+.content-compact {
+  width: 100%;
+  max-width: calc(var(--space-section) * 9);
+  margin-inline: auto;
 }
 
 /* typography.caption */
