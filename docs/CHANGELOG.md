@@ -22,6 +22,8 @@
   fixed Month and Total widths.
 - Further reduced the Bill Overview card-column minimum to 192px.
 - Made a final small reduction to the Bill Overview card-column minimum: 184px.
+- Standardized fixed overflow-aware edge-gradient cues for every horizontally
+  scrolling financial table, including Expense Entry and Expense Summary.
 - Added the Expenses module with user-scoped sections, optional line items,
   monthly amounts/income, selected-year entry and summary views, temporary
   closed-year unlocking, and RLS-protected API routes.

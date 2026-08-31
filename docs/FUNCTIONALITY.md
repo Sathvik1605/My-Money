@@ -53,6 +53,11 @@ fixed to the relevant pinned edge column: Total toward hidden later cards or
 Month toward hidden earlier cards. It disappears once that direction has no
 hidden columns.
 
+All horizontally scrolling financial tables use the same overflow-aware edge
+cue: a fixed gradient appears at the left or right edge only while more columns
+are hidden in that direction. This applies to Bill Overview, Expense Entry, and
+Expense Summary; compact tables that fit their surface do not show a cue.
+
 Switching from a financial year to a calendar year preserves the ending year of
 the selected financial period: **2025-2026** opens calendar year **2026**,
 and **2023-2024** opens **2024**. It never advances past the present calendar

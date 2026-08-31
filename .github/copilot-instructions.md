@@ -463,6 +463,8 @@ assume more modules are coming.
 ### Process
 - Use the project-local `ui-ux-pro-max` skill for any UI work:
   `python3 .github/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain>`
+- All future code changes must be committed and pushed to the `develop` branch.
+  Do not push directly to `main`.
 - The 21st.dev MCP server is configured project-locally in `.vscode/mcp.json` and
   reads `${env:TWENTY_FIRST_API_KEY}`. **Never commit a literal API key.**
 - **Standing rule:** whenever the user gives a new instruction or preference, append
@@ -517,6 +519,10 @@ Additional rules:
   Total extends leftward for hidden later columns and Month extends rightward
   after users scroll. Remove arrows, and show the gradient only while columns
   remain in that direction.
+- Every horizontally scrolling table must use the shared `ScrollableTable`
+  overflow affordance. It shows a static 16px hairline-to-transparent gradient
+  at the left or right edge only when columns remain hidden in that direction;
+  tables without horizontal overflow show no cue.
 
 ## Testing Rules
 

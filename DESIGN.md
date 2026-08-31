@@ -666,6 +666,15 @@ moves, the fixed Month column's band extends right while earlier cards are
 hidden. It appears only in its relevant direction, has no chevrons or separate
 controls, and cannot move with the scrollable content.
 
+### Scrollable table edge cues (project addition)
+
+Every table that can overflow horizontally uses `ScrollableTable`, a reusable
+fixed viewport wrapper. It measures actual overflow and draws a 16px
+hairline-to-transparent gradient at only the edge where hidden columns remain:
+right before scrolling and left after scrolling. This makes overflow discoverable
+without moving the cue with table content or adding controls. Tables that cannot
+scroll, such as compact two-column tables, do not render a cue.
+
 ### Shared application motion (project addition)
 
 Every interactive UI transition uses the same 420ms `ease-out` motion as Expense

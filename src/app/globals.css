@@ -262,6 +262,34 @@ h4 { font-size: 16px; line-height: 1.38; font-weight: var(--font-weight-semibold
   width: var(--bill-overview-edge-cue-width);
 }
 
+/* DESIGN.md: Scrollable Table Edge Cues (project addition). */
+.scrollable-table {
+  overflow: hidden;
+  position: relative;
+}
+
+.scrollable-table-viewport {
+  overflow-x: auto;
+}
+
+.scrollable-table-edge {
+  background: linear-gradient(to right, var(--color-hairline), transparent);
+  inset-block: 0;
+  pointer-events: none;
+  position: absolute;
+  width: var(--space-md);
+  z-index: 30;
+}
+
+.scrollable-table-edge-left {
+  left: 0;
+}
+
+.scrollable-table-edge-right {
+  background: linear-gradient(to left, var(--color-hairline), transparent);
+  right: 0;
+}
+
 /* DESIGN.md: Compact two-column tables (project addition). */
 .table-compact {
   width: 100%;

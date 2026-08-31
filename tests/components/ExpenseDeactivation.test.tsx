@@ -38,8 +38,23 @@ const expenseIncomePage = readFileSync(
   join(import.meta.dirname, "..", "..", "src", "app", "expenses", "income", "page.tsx"),
   "utf8",
 );
+const scrollableTable = readFileSync(
+  join(import.meta.dirname, "..", "..", "src", "components", "ScrollableTable.tsx"),
+  "utf8",
+);
 
 describe("Expense deletion controls", () => {
+  it("uses the shared edge-gradient affordance for every horizontally scrolling table", () => {
+    expect(expensesPage).toContain('import { ScrollableTable } from "@/components/ScrollableTable"');
+    expect(expensesPage).toContain("<ScrollableTable");
+    expect(expenseSummaryPage).toContain('import { ScrollableTable } from "@/components/ScrollableTable"');
+    expect(expenseSummaryPage).toContain("<ScrollableTable");
+    expect(scrollableTable).toContain('className="scrollable-table-viewport"');
+    expect(scrollableTable).toContain("scrollable-table-edge-left");
+    expect(scrollableTable).toContain("scrollable-table-edge-right");
+    expect(globalStyles).toContain(".scrollable-table-edge");
+  });
+
   it("confirms before permanently deleting a section or line item", () => {
     for (const page of [categoryPage, sectionPage]) {
       expect(page).toContain("Delete permanently");
@@ -139,7 +154,7 @@ describe("Expense deletion controls", () => {
     expect(expensesPage).toContain('<div className="card-surface mt-6">');
     expect(expensesPage).toContain('gap-3 border-b border-[var(--color-hairline)] px-4 py-1');
     expect(expensesPage).toContain('min-h-11 items-center gap-1.5');
-    expect(expensesPage).toContain('<div className="overflow-x-auto rounded-b-[var(--radius-md)]">');
+    expect(expensesPage).toContain('<ScrollableTable className="rounded-b-[var(--radius-md)]">');
     expect(expensesPage).toContain('sticky left-0 z-20');
     expect(expensesPage).toContain('sticky left-3 z-20');
   });

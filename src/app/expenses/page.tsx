@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { MonthlyAmount } from "@/components/MonthlyAmount";
+import { ScrollableTable } from "@/components/ScrollableTable";
 import { PageHeader } from "@/components/PageHeader";
 import { Select } from "@/components/Select";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
@@ -171,7 +172,7 @@ export default function ExpensesPage() {
             </Link>
           ))}
         </div>
-        <div className="overflow-x-auto rounded-b-[var(--radius-md)]">
+        <ScrollableTable className="rounded-b-[var(--radius-md)]">
           <table className="min-w-max w-full text-sm">
           <caption className="sr-only">Expenses by category, section, and month</caption>
           <thead><tr className="table-data-row border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
@@ -217,7 +218,7 @@ export default function ExpensesPage() {
             <td className="numeric sticky right-0 z-10 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right">{formatCurrency(grandTotal)}</td>
           </tr></tfoot>
           </table>
-        </div>
+        </ScrollableTable>
       </div>
       {confirmUnlock && <Modal title="Edit closed year" onClose={() => setConfirmUnlock(false)}><p>This year is closed — edit anyway?</p><div className="mt-6 flex justify-end gap-2"><button type="button" className="btn-ghost" onClick={() => setConfirmUnlock(false)}>Cancel</button><button type="button" className="btn-primary" onClick={() => { setUnlocked(true); setConfirmUnlock(false); }}>Edit this year</button></div></Modal>}
     </main>
