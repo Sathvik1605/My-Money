@@ -2,6 +2,26 @@
 
 ## 2026-08-30
 
+- Made Bill Overview card columns distribute equally above a shared 240px
+  minimum, with narrower 160px pinned Month and Total columns and contained
+  horizontal scrolling for wider card sets.
+- Added directional Bill Overview edge cues so people can see when card columns
+  remain off-screen to the left or right.
+- Expanded Bill Overview edge cues into full-height surface gradients so hidden
+  left and right card columns have a stronger visual affordance.
+- Anchored Bill Overview overflow shadows to the fixed Month and Total columns
+  and removed moving arrow cues.
+- Corrected the fixed-column shadow geometry so the hidden-column affordance is
+  visibly rendered at either table edge.
+- Replaced the subtle Bill Overview shadows with static pinned-column gradient
+  bands.
+- Reduced the Bill Overview fixed edge-gradient cue to 24px and card-column
+  minimum to 216px while retaining pinned edge widths.
+- Narrowed the fixed Bill Overview edge-gradient cue to 16px.
+- Reduced the Bill Overview card-column minimum to 208px while retaining the
+  fixed Month and Total widths.
+- Further reduced the Bill Overview card-column minimum to 192px.
+- Made a final small reduction to the Bill Overview card-column minimum: 184px.
 - Added the Expenses module with user-scoped sections, optional line items,
   monthly amounts/income, selected-year entry and summary views, temporary
   closed-year unlocking, and RLS-protected API routes.
@@ -105,6 +125,15 @@ top-left legend to explain their colors.
   the shared action-pill shape for Financial/Calendar controls.
 - Standardized application transitions on the 420ms ease-out reorder motion,
   including category and line-item delete-action reveals.
+- Reduced the dedicated light/dark palette cross-fade to 240ms.
+- Halved the Expense Entry category-strip width and realigned its pinned
+  Section column.
+- Added the centered compact-table rule for two-column tables and applied it
+  to Income.
+- Applied the centered compact-table rule to category and line-item data lists.
+- Aligned compact-page headers, titles, notices, and footer actions with their
+  two-column data surfaces.
+- Widened the centered compact two-column layout to 720px.
 - Increased and standardized table headers, including Section and month labels,
   with the shared semibold 16px treatment.
 - Simplified Expense Entry month headers to month names and widened its fixed

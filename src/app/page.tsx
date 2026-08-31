@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, type CSSProperties } from "react";
 import { StatementForm } from "@/components/StatementForm";
 import { Select } from "@/components/Select";
 import { Modal } from "@/components/Modal";
@@ -11,6 +11,7 @@ import { cardsWithPaymentsDue, financialYearStartForDate } from "@/lib/year-grid
 import type { CardRow, StatementRow } from "@/lib/client-types";
 
 type YearType = "financial" | "calendar";
+type BillOverviewTableStyle = CSSProperties & { "--bill-card-column-count": number };
 
 interface YearGridData {
   year: number;
@@ -44,6 +45,9 @@ export default function BillOverviewPage() {
   const [statements, setStatements] = useState<StatementRow[]>([]);
   const [editingStatement, setEditingStatement] = useState<StatementRow | null>(null);
   const [statementPendingRemoval, setStatementPendingRemoval] = useState<StatementRow | null>(null);
+  const billTableScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollToEarlierCards, setCanScrollToEarlierCards] = useState(false);
+  const [canScrollToMoreCards, setCanScrollToMoreCards] = useState(false);
 
   const loadGrid = useCallback(async () => {
     setLoading(true);
@@ -78,6 +82,26 @@ export default function BillOverviewPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount
     loadCardsAndStatements();
   }, [loadCardsAndStatements]);
+
+  const updateBillTableScrollCue = useCallback(() => {
+    const container = billTableScrollRef.current;
+    if (!container) return;
+
+    const hasOverflow = container.scrollWidth > container.clientWidth;
+    setCanScrollToEarlierCards(hasOverflow && container.scrollLeft > 1);
+    setCanScrollToMoreCards(hasOverflow && container.scrollLeft < container.scrollWidth - container.clientWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    updateBillTableScrollCue();
+
+    const container = billTableScrollRef.current;
+    if (!container || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateBillTableScrollCue);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [grid, updateBillTableScrollCue]);
 
   async function postStatement(values: {
     card_id: string;
@@ -183,6 +207,10 @@ export default function BillOverviewPage() {
     }
     setYearType(nextYearType);
   }
+
+  const billOverviewTableStyle: BillOverviewTableStyle = {
+    "--bill-card-column-count": grid?.cards.length ?? 0,
+  };
 
   return (
     <main className="app-page mx-auto">
@@ -368,9 +396,21 @@ export default function BillOverviewPage() {
       {loading && <p className="mt-6 text-[var(--color-text-muted)]">Loading…</p>}
 
       {!loading && grid && grid.cards.length > 0 && (
-        <div className="card-surface mt-4 overflow-x-auto">
-          <table className="min-w-full w-max table-fixed text-sm">
+        <div
+          ref={billTableScrollRef}
+          className="card-surface relative mt-4 overflow-x-auto"
+          onScroll={updateBillTableScrollCue}
+        >
+          <table
+            className={`bill-overview-table text-sm ${
+              canScrollToEarlierCards ? "bill-overview-has-left-overflow" : ""
+            } ${canScrollToMoreCards ? "bill-overview-has-right-overflow" : ""}`}
+            style={billOverviewTableStyle}
+          >
             <caption className="sr-only">Credit card bills by month</caption>
+            <colgroup>
+              {Array.from({ length: grid.cards.length + 2 }, (_, index) => <col key={index} />)}
+            </colgroup>
             <thead>
               <tr className="table-data-row border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
                 <th
@@ -383,7 +423,7 @@ export default function BillOverviewPage() {
                   <th
                     key={c.id}
                     scope="col"
-                    className="table-header w-[var(--table-card-column-width)] px-4 py-2.5 text-right"
+                    className="table-header px-4 py-2.5 text-right"
                   >
                     {c.nickname}
                     {!c.is_active && <span className="ml-1 opacity-60">(closed)</span>}
@@ -391,7 +431,7 @@ export default function BillOverviewPage() {
                 ))}
                 <th
                   scope="col"
-                  className="table-header sticky right-0 z-20 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right"
+                  className="table-header sticky right-0 z-20 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right"
                 >
                   Total
                 </th>
@@ -412,7 +452,7 @@ export default function BillOverviewPage() {
                     const unpaid = (row.unpaidAmounts?.[c.id] ?? 0) > 0;
                     const overdue = cellStatement ? isOverdue(cellStatement) : false;
                     return (
-                      <td key={c.id} className="w-[var(--table-card-column-width)] px-2 py-1.5 text-right">
+                      <td key={c.id} className="px-2 py-1.5 text-right">
                         {cellStatement ? (
                           <button
                             onClick={() => setEditingStatement(cellStatement)}
@@ -431,7 +471,7 @@ export default function BillOverviewPage() {
                       </td>
                     );
                   })}
-                  <td className="numeric sticky right-0 z-10 w-[var(--table-total-column-width)] bg-[var(--color-surface)] px-4 py-2.5 text-right font-semibold">
+                  <td className="numeric sticky right-0 z-10 bg-[var(--color-surface)] px-4 py-2.5 text-right font-semibold">
                     {formatCurrency(row.total)}
                   </td>
                 </tr>
@@ -443,11 +483,11 @@ export default function BillOverviewPage() {
                   Total
                 </th>
                 {grid.cards.map((c) => (
-                  <td key={c.id} className="numeric w-[var(--table-card-column-width)] px-4 py-3 text-right">
+                  <td key={c.id} className="numeric px-4 py-3 text-right">
                     {formatCurrency(grid.cardTotals[c.id] ?? 0)}
                   </td>
                 ))}
-                <td className="numeric sticky right-0 z-10 w-[var(--table-total-column-width)] bg-[var(--color-canvas-soft)] px-4 py-3 text-right">
+                <td className="numeric sticky right-0 z-10 bg-[var(--color-canvas-soft)] px-4 py-3 text-right">
                   {formatCurrency(grid.grandTotal)}
                 </td>
               </tr>

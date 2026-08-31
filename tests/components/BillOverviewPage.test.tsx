@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BillOverviewPage from "@/app/page";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -95,6 +95,33 @@ describe("Bill Overview", () => {
     expect(await screen.findByRole("rowheader", { name: "Sep 2026" })).toBeInTheDocument();
     expect(screen.getByRole("rowheader", { name: "Apr 2026" })).toBeInTheDocument();
     expect(screen.getByRole("rowheader", { name: "Mar 2027" })).toBeInTheDocument();
+  });
+
+  it("keeps narrower pinned edge columns and scrolls card columns inside the table surface", async () => {
+    renderPage();
+
+    const table = await screen.findByRole("table", { name: "Credit card bills by month" });
+    expect(table).toHaveClass("bill-overview-table");
+    expect(table.style.getPropertyValue("--bill-card-column-count")).toBe("1");
+    expect(table.querySelectorAll("colgroup col")).toHaveLength(3);
+    expect(table.parentElement).toHaveClass("overflow-x-auto");
+  });
+
+  it("adds a static gradient to the pinned Total column only when card columns remain off-screen", async () => {
+    renderPage();
+
+    const table = await screen.findByRole("table", { name: "Credit card bills by month" });
+    const container = table.parentElement as HTMLDivElement;
+    Object.defineProperties(container, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 560 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+    });
+
+    fireEvent.scroll(container);
+
+    expect(table).toHaveClass("bill-overview-has-right-overflow");
+    expect(container.querySelector(".bill-overview-scroll-cue")).toBeNull();
   });
 
   it("counts the distinct cards with an outstanding bill in the selected year", async () => {

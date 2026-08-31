@@ -141,7 +141,7 @@ describe("Expense deletion controls", () => {
     expect(expensesPage).toContain('min-h-11 items-center gap-1.5');
     expect(expensesPage).toContain('<div className="overflow-x-auto rounded-b-[var(--radius-md)]">');
     expect(expensesPage).toContain('sticky left-0 z-20');
-    expect(expensesPage).toContain('sticky left-6 z-20');
+    expect(expensesPage).toContain('sticky left-3 z-20');
   });
 
   it("uses the shared balanced application gutter for every workspace page", () => {
@@ -162,13 +162,29 @@ describe("Expense deletion controls", () => {
     expect(globalStyles).toContain("padding-block: var(--space-xl)");
   });
 
+  it("centers every two-column expense data surface with the compact-table rule", () => {
+    for (const page of [expenseIncomePage, categoryPage, sectionPage]) {
+      expect(page).toContain("card-surface table-compact mt-6");
+      expect(page).toContain('className="content-compact"');
+    }
+    expect(globalStyles).toContain(".content-compact");
+    expect(globalStyles).toContain("max-width: calc(var(--space-section) * 9)");
+  });
+
   it("uses the shared larger bold table-header treatment for Section and month labels", () => {
-    expect(expensesPage).toContain("table-header sticky left-6 z-20 min-w-52 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left");
+    expect(expensesPage).toContain("table-header sticky left-3 z-20 min-w-52 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-left");
     expect(expensesPage).toContain('table-header min-w-32 bg-[var(--color-canvas-soft)] px-4 py-2.5 text-right');
     expect(globalStyles).toContain(".table-header");
     expect(globalStyles).toContain("font-size: 16px");
     expect(globalStyles).toContain("font-weight: var(--font-weight-semibold)");
     expect(globalStyles).toContain("color: var(--color-ink)");
+  });
+
+  it("uses 12px category strips and matching pinned Section offsets in Expense Entry", () => {
+    expect(expensesPage).toContain("sticky left-0 z-20 w-3");
+    expect(expensesPage).toContain("sticky left-0 z-10 w-3");
+    expect(expensesPage).toContain("sticky left-3 z-10 bg-[var(--color-canvas)]");
+    expect(expensesPage).not.toContain("sticky left-6");
   });
 
   it("uses compact shared-scale padding for all Bill Overview summary cards", () => {
@@ -207,7 +223,10 @@ describe("Expense deletion controls", () => {
     expect(expenseIncomePage).toContain('month: "long", timeZone: "UTC"');
     expect(expenseIncomePage).not.toContain('month: "long", year: "numeric"');
     expect(expenseIncomePage).not.toContain("min-w-max w-full");
-    expect(expenseIncomePage).toContain("max-w-[calc(var(--space-section)*6)] overflow-hidden");
+    expect(expenseIncomePage).toContain('className="card-surface table-compact mt-6"');
+    expect(globalStyles).toContain(".table-compact");
+    expect(globalStyles).toContain("max-width: calc(var(--space-section) * 9)");
+    expect(globalStyles).toContain("margin-inline: auto");
     expect(expenseIncomePage).toContain('className="px-4 py-0 text-left font-semibold"');
     expect(expenseIncomePage).toContain('className="px-2 py-0 text-right"');
     expect(expenseIncomePage).toContain('className="px-4 py-0 text-left">Total income</th>');

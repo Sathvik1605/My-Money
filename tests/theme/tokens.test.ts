@@ -160,4 +160,10 @@ describe("theme tokens", () => {
   it("honours prefers-reduced-motion", () => {
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
+
+  it("uses a faster dedicated duration for theme repainting", () => {
+    expect(light["--duration-standard"]).toBe("420ms");
+    expect(light["--duration-base"]).toBe("240ms");
+    expect(css).toContain("background-color var(--duration-base) ease-out");
+  });
 });
